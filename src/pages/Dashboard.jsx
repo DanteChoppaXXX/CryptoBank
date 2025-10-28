@@ -20,24 +20,19 @@ import {
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import { useTransactions } from "../context/TransactionContext";
 
 export default function Dashboard() {
-  // --- BALANCE STATE ---
-  const [balanceUSD, setBalanceUSD] = useState(15432.75);
-  const [openModal, setOpenModal] = useState(false);
-  const [modalType, setModalType] = useState("deposit"); // 'deposit' | 'withdraw'
+  // --- GLOBAL STATE FROM CONTEXT ---
+  const { balanceUSD, transactions, addTransaction } = useTransactions();
 
+  // --- LOCAL UI STATES ---
+  const [openModal, setOpenModal] = useState(false);
+  const [modalType, setModalType] = useState("deposit"); // "deposit" | "withdraw"
   const [amount, setAmount] = useState("");
   const [error, setError] = useState(false);
   const [tooltipText, setTooltipText] = useState("");
   const [snack, setSnack] = useState({ open: false, message: "", severity: "" });
-
-  // --- TRANSACTIONS DATA ---
-  const [transactions, setTransactions] = useState([
-    { id: 1, type: "Deposit", amount: "$500", status: "Success" },
-    { id: 2, type: "Withdraw", amount: "$250", status: "Pending" },
-    { id: 3, type: "Deposit", amount: "$1000", status: "Success" },
-  ]);
 
   const balanceBTC = (balanceUSD / 68000).toFixed(4); // Example BTC rate
 
@@ -95,19 +90,9 @@ export default function Dashboard() {
       return;
     }
 
-    // Update balance and transactions
-    const newBalance =
-      modalType === "deposit" ? balanceUSD + value : balanceUSD - value;
-    setBalanceUSD(newBalance);
+    // Update global state and save persistently
+    addTransaction(modalType, value);
 
-    const newTransaction = {
-      id: transactions.length + 1,
-      type: modalType === "deposit" ? "Deposit" : "Withdraw",
-      amount: `$${value.toFixed(2)}`,
-      status: "Success",
-    };
-
-    setTransactions([newTransaction, ...transactions]);
     handleCloseModal();
     setSnack({
       open: true,
@@ -180,7 +165,7 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* Transactions Table */}
+      {/* Transactions Table (shows only latest 5) */}
       <Box>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
           Recent Transactions
@@ -200,15 +185,17 @@ export default function Dashboard() {
             >
               <TableRow>
                 <TableCell sx={{ color: "#c9d1d9" }}>Type</TableCell>
-                <TableCell sx={{ color: "#c9d1d9" }}>Amount</TableCell>
+                <TableCell sx={{ color: "#c9d1d9" }}>Amount (USD)</TableCell>
+                <TableCell sx={{ color: "#c9d1d9" }}>Amount (BTC)</TableCell>
                 <TableCell sx={{ color: "#c9d1d9" }}>Status</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {transactions.map((tx) => (
+              {transactions.slice(0, 5).map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell>{tx.type}</TableCell>
-                  <TableCell>{tx.amount}</TableCell>
+                  <TableCell>${tx.amountUSD}</TableCell>
+                  <TableCell>{tx.amountBTC}</TableCell>
                   <TableCell>
                     <Box
                       sx={{
@@ -373,7 +360,7 @@ export default function Dashboard() {
         </Box>
       </Modal>
 
-      {/* Snackbar for success message */}
+      {/* Snackbar */}
       <Snackbar
         open={snack.open}
         autoHideDuration={4000}

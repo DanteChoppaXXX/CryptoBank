@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login";
+import { TransactionProvider } from "./context/TransactionContext";
 
 const router = createBrowserRouter([
   {
@@ -20,15 +22,18 @@ const router = createBrowserRouter([
       { path: "profile", element: <Profile /> },
       { path: "transactions", element: <Transactions /> },
       { path: "settings", element: <Settings /> },
+      { path: "login", element: <Login /> },
     ],
   },
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <RouterProvider router={router} />
-    </ThemeProvider>
+    <TransactionProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <RouterProvider router={router} />
+        </ThemeProvider>
+    </TransactionProvider>
   </React.StrictMode>
 );

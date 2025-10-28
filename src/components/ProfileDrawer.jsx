@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useNavigate } from "react-router-dom";
 
 export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) {
   const [user, setUser] = useState(initialData);
@@ -23,7 +25,8 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
     severity: "success",
   });
 
-  // Keep in sync with Layout when reopened
+  const navigate = useNavigate();
+
   useEffect(() => {
     setUser(initialData);
   }, [initialData]);
@@ -66,6 +69,22 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
 
   const handleCancel = () => setEditMode(false);
 
+  // --- 🧹 Sign Out Handler ---
+  const handleSignOut = () => {
+    localStorage.removeItem("qfs_user");
+    const defaultUser = { name: "John Doe", avatar: "" };
+    onUpdate(defaultUser);
+    setSnack({
+      open: true,
+      message: "You have been signed out.",
+      severity: "info",
+    });
+    setTimeout(() => {
+      onClose();
+      navigate("/login"); // redirect to login page if available
+    }, 1200);
+  };
+
   return (
     <>
       <Drawer
@@ -79,6 +98,9 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
             color: "#e6edf3",
             borderLeft: "1px solid #30363d",
             boxShadow: "0 0 20px rgba(0,255,204,0.15)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           },
         }}
       >
@@ -112,7 +134,6 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
             overflowY: "auto",
           }}
         >
-          {/* Avatar Section */}
           <Box sx={{ position: "relative", mb: 2 }}>
             <Avatar
               src={user.avatar || ""}
@@ -203,16 +224,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 variant="outlined"
                 value={user.name}
                 onChange={(e) => handleChange("name", e.target.value)}
-                sx={{
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#30363d" },
-                    "&:hover fieldset": { borderColor: "#00ffcc" },
-                    "&.Mui-focused fieldset": { borderColor: "#00ffcc" },
-                  },
-                  input: { color: "#e6edf3" },
-                  label: { color: "#8b949e" },
-                }}
+                sx={textFieldStyle}
               />
               <TextField
                 label="Username"
@@ -220,16 +232,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 variant="outlined"
                 value={user.username || ""}
                 onChange={(e) => handleChange("username", e.target.value)}
-                sx={{
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#30363d" },
-                    "&:hover fieldset": { borderColor: "#00ffcc" },
-                    "&.Mui-focused fieldset": { borderColor: "#00ffcc" },
-                  },
-                  input: { color: "#e6edf3" },
-                  label: { color: "#8b949e" },
-                }}
+                sx={textFieldStyle}
               />
               <TextField
                 label="Email"
@@ -237,16 +240,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 variant="outlined"
                 value={user.email || ""}
                 onChange={(e) => handleChange("email", e.target.value)}
-                sx={{
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#30363d" },
-                    "&:hover fieldset": { borderColor: "#00ffcc" },
-                    "&.Mui-focused fieldset": { borderColor: "#00ffcc" },
-                  },
-                  input: { color: "#e6edf3" },
-                  label: { color: "#8b949e" },
-                }}
+                sx={textFieldStyle}
               />
               <TextField
                 label="Bio"
@@ -256,16 +250,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 variant="outlined"
                 value={user.bio || ""}
                 onChange={(e) => handleChange("bio", e.target.value)}
-                sx={{
-                  mb: 3,
-                  "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "#30363d" },
-                    "&:hover fieldset": { borderColor: "#00ffcc" },
-                    "&.Mui-focused fieldset": { borderColor: "#00ffcc" },
-                  },
-                  textarea: { color: "#e6edf3" },
-                  label: { color: "#8b949e" },
-                }}
+                sx={textFieldStyle}
               />
 
               <Box sx={{ display: "flex", gap: 2, width: "100%" }}>
@@ -297,6 +282,33 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
             </>
           )}
         </Box>
+
+        {/* --- Sign Out Section --- */}
+        <Box
+          sx={{
+            borderTop: "1px solid #30363d",
+            p: 2,
+            display: "flex",
+            justifyContent: "center",
+          }}
+        >
+          <Button
+            startIcon={<LogoutIcon />}
+            onClick={handleSignOut}
+            sx={{
+              background: "rgba(255,255,255,0.08)",
+              color: "#ff6b6b",
+              fontWeight: 600,
+              borderRadius: "8px",
+              px: 3,
+              "&:hover": {
+                background: "rgba(255,255,255,0.15)",
+              },
+            }}
+          >
+            Sign Out
+          </Button>
+        </Box>
       </Drawer>
 
       <Snackbar
@@ -319,4 +331,17 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
     </>
   );
 }
+
+// Shared TextField styling
+const textFieldStyle = {
+  mb: 2,
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": { borderColor: "#30363d" },
+    "&:hover fieldset": { borderColor: "#00ffcc" },
+    "&.Mui-focused fieldset": { borderColor: "#00ffcc" },
+  },
+  input: { color: "#e6edf3" },
+  label: { color: "#8b949e" },
+  textarea: { color: "#e6edf3" },
+};
 
