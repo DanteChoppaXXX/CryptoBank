@@ -5,24 +5,42 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./theme";
 import Layout from "./layout/Layout";
 
+// Context
+import { TransactionProvider } from "./context/TransactionContext";
+
 // Pages
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
 import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
-import { TransactionProvider } from "./context/TransactionContext";
+import Register from "./pages/Register";
+
+// Routes
+import ProtectedRoute from "./routes/ProtectedRoute";
+import PublicRoute from "./routes/PublicRoute";
 
 const router = createBrowserRouter([
+  // 🟩 Protected (user must be logged in)
   {
-    path: "/",
-    element: <Layout />,
+    element: <ProtectedRoute />,
     children: [
-      { index: true, element: <Dashboard /> },
-      { path: "profile", element: <Profile /> },
-      { path: "transactions", element: <Transactions /> },
-      { path: "settings", element: <Settings /> },
+      {
+        element: <Layout />,
+        children: [
+          { index: true, element: <Dashboard /> },
+          { path: "transactions", element: <Transactions /> },
+          { path: "settings", element: <Settings /> },
+        ],
+      },
+    ],
+  },
+
+  // 🟦 Public (login/register only when logged out)
+  {
+    element: <PublicRoute />,
+    children: [
       { path: "login", element: <Login /> },
+      { path: "register", element: <Register /> },
     ],
   },
 ]);
@@ -30,10 +48,11 @@ const router = createBrowserRouter([
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <TransactionProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          <RouterProvider router={router} />
-        </ThemeProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <RouterProvider router={router} />
+      </ThemeProvider>
     </TransactionProvider>
   </React.StrictMode>
 );
+

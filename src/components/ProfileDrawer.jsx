@@ -17,7 +17,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
 
 export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) {
-  const [user, setUser] = useState(initialData);
+  const [user, setUser] = useState(initialData || {});
   const [editMode, setEditMode] = useState(false);
   const [snack, setSnack] = useState({
     open: false,
@@ -28,7 +28,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
   const navigate = useNavigate();
 
   useEffect(() => {
-    setUser(initialData);
+    setUser(initialData || {});
   }, [initialData]);
 
   const handleChange = (field, value) => {
@@ -69,21 +69,22 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
 
   const handleCancel = () => setEditMode(false);
 
-  // --- 🧹 Sign Out Handler ---
-  const handleSignOut = () => {
-    localStorage.removeItem("qfs_user");
-    const defaultUser = { name: "John Doe", avatar: "" };
-    onUpdate(defaultUser);
-    setSnack({
-      open: true,
-      message: "You have been signed out.",
-      severity: "info",
-    });
-    setTimeout(() => {
-      onClose();
-      navigate("/login"); // redirect to login page if available
-    }, 1200);
-  };
+ // --- 🧹 Sign Out Handler (updated) ---
+    const handleSignOut = () => {
+      // Keep user profile data intact
+      localStorage.setItem("qfs_logged_in", "false");
+
+      setSnack({
+        open: true,
+        message: "You have been signed out.",
+        severity: "info",
+      });
+
+      setTimeout(() => {
+        onClose();
+        navigate("/login");
+      }, 1200);
+    };
 
   return (
     <>
@@ -136,7 +137,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
         >
           <Box sx={{ position: "relative", mb: 2 }}>
             <Avatar
-              src={user.avatar || ""}
+              src={user?.avatar || ""}
               sx={{
                 width: 100,
                 height: 100,
@@ -147,7 +148,8 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 fontWeight: 700,
               }}
             >
-              {!user.avatar && user.name.charAt(0)}
+              {!user?.avatar &&
+                (user?.name?.charAt(0)?.toUpperCase() || "")}
             </Avatar>
 
             {editMode && (
@@ -183,22 +185,22 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
           {!editMode ? (
             <>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {user.name}
+                {user?.name || "Guest"}
               </Typography>
               <Typography
                 variant="body2"
                 sx={{ color: "#8b949e", mt: 0.5, mb: 1 }}
               >
-                @{user.username || "username"}
+                @{user?.username || "username"}
               </Typography>
               <Typography variant="body2" sx={{ mb: 2 }}>
-                {user.bio || "No bio yet"}
+                {user?.bio || "No bio yet"}
               </Typography>
 
               <Divider sx={{ width: "100%", mb: 2, borderColor: "#30363d" }} />
 
               <Typography variant="body2" sx={{ color: "#c9d1d9", mb: 1 }}>
-                Email: <b>{user.email || "Not set"}</b>
+                Email: <b>{user?.email || "Not set"}</b>
               </Typography>
 
               <Button
@@ -222,7 +224,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 label="Full Name"
                 fullWidth
                 variant="outlined"
-                value={user.name}
+                value={user?.name || ""}
                 onChange={(e) => handleChange("name", e.target.value)}
                 sx={textFieldStyle}
               />
@@ -230,7 +232,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 label="Username"
                 fullWidth
                 variant="outlined"
-                value={user.username || ""}
+                value={user?.username || ""}
                 onChange={(e) => handleChange("username", e.target.value)}
                 sx={textFieldStyle}
               />
@@ -238,7 +240,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 label="Email"
                 fullWidth
                 variant="outlined"
-                value={user.email || ""}
+                value={user?.email || ""}
                 onChange={(e) => handleChange("email", e.target.value)}
                 sx={textFieldStyle}
               />
@@ -248,7 +250,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 multiline
                 rows={3}
                 variant="outlined"
-                value={user.bio || ""}
+                value={user?.bio || ""}
                 onChange={(e) => handleChange("bio", e.target.value)}
                 sx={textFieldStyle}
               />

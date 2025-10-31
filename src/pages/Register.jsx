@@ -5,16 +5,25 @@ import {
   Button,
   Typography,
   Paper,
-  Snackbar,
   Alert,
+  Snackbar,
   Link,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [snack, setSnack] = useState({ open: false, message: "", severity: "error" });
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirm: "",
+  });
+  const [snack, setSnack] = useState({
+    open: false,
+    message: "",
+    severity: "error",
+  });
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -22,44 +31,32 @@ export default function Login() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const { email, password } = formData;
 
-    if (!email || !password) {
+    const { username, email, password, confirm } = formData;
+
+    if (!username || !email || !password || !confirm) {
       setSnack({ open: true, message: "All fields are required.", severity: "error" });
       return;
     }
 
-    // Get registered user
-    const savedUser = JSON.parse(localStorage.getItem("qfs_user"));
-
-    if (!savedUser) {
-      setSnack({
-        open: true,
-        message: "No registered account found. Please sign up.",
-        severity: "error",
-      });
+    if (password !== confirm) {
+      setSnack({ open: true, message: "Passwords do not match.", severity: "error" });
       return;
     }
 
-    if (savedUser.email !== email || savedUser.password !== password) {
-      setSnack({
-        open: true,
-        message: "Invalid email or password.",
-        severity: "error",
-      });
-      return;
-    }
+    // Save user in localStorage (simulate registration)
+    const userData = { username, email, password, balance: 0, avatar: "" };
+    localStorage.setItem("qfs_user", JSON.stringify(userData));
+    localStorage.setItem("qfs_transactions", JSON.stringify([]));
 
-    // Successful login
+    setSnack({ open: true, message: "Registration successful!", severity: "success" });
+    
+    // ✅ Mark as logged in
     localStorage.setItem("qfs_logged_in", "true");
-
-    setSnack({
-      open: true,
-      message: "Login successful!",
-      severity: "success",
-    });
-
-    setTimeout(() => navigate("/"), 1500);
+      
+    setTimeout(() => {
+      navigate("/"); // redirect to dashboard
+    }, 1500);
   };
 
   return (
@@ -75,10 +72,10 @@ export default function Login() {
         flexDirection: "column",
       }}
     >
-      {/* 🔷 App Logo */}
+      {/* 🔷 App Logo Section */}
       <Box
         component="img"
-        src="/logo.png" // must be in public folder
+        src="/logo.png" // <-- place your logo in public/logo.png
         alt="CryptoBank Logo"
         sx={{
           width: 250,
@@ -89,7 +86,7 @@ export default function Login() {
         }}
       />
 
-      {/* 🔷 Login Card */}
+      {/* 🔷 Registration Card */}
       <Paper
         elevation={3}
         sx={{
@@ -106,10 +103,31 @@ export default function Login() {
           align="left"
           sx={{ mb: 3, fontWeight: 520, color: "#fffffc" }}
         >
-          Welcome Back
+          Create Account
         </Typography>
 
         <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label="Username"
+            name="username"
+            value={formData.username}
+            onChange={handleChange}
+            margin="normal"
+            variant="outlined"
+            InputLabelProps={{ style: { color: "#c9d1d9" } }}
+            InputProps={{
+              style: { color: "#e6edf3" },
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
+              "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
+              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+                borderColor: "#00ffcc",
+              },
+            }}
+          />
+
           <TextField
             fullWidth
             label="Email"
@@ -120,7 +138,9 @@ export default function Login() {
             margin="normal"
             variant="outlined"
             InputLabelProps={{ style: { color: "#c9d1d9" } }}
-            InputProps={{ style: { color: "#e6edf3" } }}
+            InputProps={{
+              style: { color: "#e6edf3" },
+            }}
             sx={{
               "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
               "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
@@ -140,7 +160,31 @@ export default function Login() {
             margin="normal"
             variant="outlined"
             InputLabelProps={{ style: { color: "#c9d1d9" } }}
-            InputProps={{ style: { color: "#e6edf3" } }}
+            InputProps={{
+              style: { color: "#e6edf3" },
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
+              "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
+              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+                borderColor: "#00ffcc",
+              },
+            }}
+          />
+
+          <TextField
+            fullWidth
+            label="Confirm Password"
+            name="confirm"
+            type="password"
+            value={formData.confirm}
+            onChange={handleChange}
+            margin="normal"
+            variant="outlined"
+            InputLabelProps={{ style: { color: "#c9d1d9" } }}
+            InputProps={{
+              style: { color: "#e6edf3" },
+            }}
             sx={{
               "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
               "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
@@ -161,23 +205,23 @@ export default function Login() {
               "&:hover": { background: "#00d4aa" },
             }}
           >
-            Login
+            Register
           </Button>
         </form>
 
         <Typography align="center" sx={{ mt: 2, color: "#8b949e" }}>
-          Don't have an account?{" "}
+          Already have an account?{" "}
           <Link
             component="button"
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/login")}
             sx={{ color: "#00ffcc", textDecoration: "none" }}
           >
-            Register
+            Login
           </Link>
         </Typography>
       </Paper>
 
-      {/* Snackbar */}
+      {/* Snackbar Notifications */}
       <Snackbar
         open={snack.open}
         autoHideDuration={4000}

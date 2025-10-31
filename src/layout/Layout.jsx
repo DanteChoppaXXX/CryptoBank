@@ -27,10 +27,7 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [user, setUser] = useState({
-    name: "John Doe",
-    avatar: "",
-  });
+  const [user, setUser] = useState(null); // safer default
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,13 +40,22 @@ export default function Layout() {
 
   const toggleDrawer = () => setDrawerOpen(!drawerOpen);
 
-  // Load persisted profile data
-  useEffect(() => {
-    const storedUser = localStorage.getItem("qfs_user");
-    if (storedUser) setUser(JSON.parse(storedUser));
-  }, []);
+  // ✅ Load persisted user from localStorage on mount
+ useEffect(() => {
+  const storedUser = localStorage.getItem("qfs_user");
+  const isLoggedIn = localStorage.getItem("qfs_logged_in") === "true";
 
-  // When ProfileDrawer updates user info
+  if (!isLoggedIn) {
+    navigate("/login");
+    return;
+  }
+
+  if (storedUser) {
+    setUser(JSON.parse(storedUser));
+  }
+}, [navigate]);
+
+  // ✅ When ProfileDrawer updates user info
   const handleProfileUpdate = (updatedUser) => {
     setUser(updatedUser);
     localStorage.setItem("qfs_user", JSON.stringify(updatedUser));
@@ -67,7 +73,7 @@ export default function Layout() {
     >
       <CssBaseline />
 
-      {/* Top AppBar */}
+      {/* 🌟 Top AppBar */}
       <AppBar
         position="sticky"
         sx={{
@@ -77,6 +83,7 @@ export default function Layout() {
         }}
       >
         <Toolbar>
+          {/* Sidebar toggle (mobile) */}
           <IconButton
             color="inherit"
             edge="start"
@@ -93,7 +100,7 @@ export default function Layout() {
             QFS
           </Typography>
 
-          {/* Desktop Nav Links */}
+          {/* 🌐 Desktop Nav Links */}
           <Box sx={{ display: { xs: "none", sm: "flex" }, mr: 3 }}>
             {navLinks.map((link) => (
               <Typography
@@ -115,11 +122,11 @@ export default function Layout() {
             ))}
           </Box>
 
-          {/* User Avatar (opens Profile Drawer) */}
-          <Tooltip title="Profile">
+          {/* 👤 User Avatar (Profile Drawer trigger) */}
+          <Tooltip title={user?.name || "Profile"}>
             <IconButton onClick={() => setProfileOpen(true)} sx={{ p: 0 }}>
               <Avatar
-                src={user.avatar || ""}
+                src={user?.avatar || ""}
                 sx={{
                   bgcolor: "#00ffcc",
                   color: "#000",
@@ -129,14 +136,16 @@ export default function Layout() {
                   fontSize: "1rem",
                 }}
               >
-                {!user.avatar && user.name.charAt(0)}
+                {/* Fallback initial or '?' */}
+                {!user?.avatar &&
+                  (user?.name?.charAt(0)?.toUpperCase() || "")}
               </Avatar>
             </IconButton>
           </Tooltip>
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar Drawer (mobile) */}
+      {/* 📱 Sidebar Drawer (mobile) */}
       <Drawer
         anchor="left"
         open={drawerOpen}
@@ -186,7 +195,7 @@ export default function Layout() {
         </Box>
       </Drawer>
 
-      {/* Main Page Content */}
+      {/* 🧩 Main Page Content */}
       <Container
         maxWidth="lg"
         sx={{
@@ -198,7 +207,7 @@ export default function Layout() {
         <Outlet />
       </Container>
 
-      {/* Footer */}
+      {/* 🦶 Footer */}
       <Box
         component="footer"
         sx={{
@@ -213,12 +222,12 @@ export default function Layout() {
         © {new Date().getFullYear()} CryptoBank — All rights reserved
       </Box>
 
-      {/* Profile Drawer */}
+      {/* 👤 Profile Drawer */}
       <ProfileDrawer
         open={profileOpen}
         onClose={() => setProfileOpen(false)}
         onUpdate={handleProfileUpdate}
-        initialData={user}
+        initialData={user || { name: "Guest", avatar: "" }}
       />
     </Box>
   );
