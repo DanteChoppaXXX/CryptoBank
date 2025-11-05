@@ -10,56 +10,106 @@ import {
   Link,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 export default function Login() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [snack, setSnack] = useState({ open: false, message: "", severity: "error" });
+  const [snack, setSnack] = useState({
+    open: false,
+    message: "",
+    severity: "error",
+  });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+
     const { email, password } = formData;
-
     if (!email || !password) {
-      setSnack({ open: true, message: "All fields are required.", severity: "error" });
-      return;
-    }
-
-    // Get registered user
-    const savedUser = JSON.parse(localStorage.getItem("qfs_user"));
-
-    if (!savedUser) {
       setSnack({
         open: true,
-        message: "No registered account found. Please sign up.",
+        message: "All fields are required.",
         severity: "error",
       });
+      setLoading(false);
       return;
     }
 
-    if (savedUser.email !== email || savedUser.password !== password) {
+    try {
+      // ✅ Firebase authentication
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 🔍 Fetch user data from Firestore
+      const userDocRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userDocRef);
+
+      if (!userSnap.exists()) {
+        throw new Error("User data not found in database. Please contact support.");
+      }
+
+      const userData = userSnap.data();
+
+      // ✅ Store user info in localStorage
+      localStorage.setItem("qfs_logged_in", "true");
+      localStorage.setItem(
+        "qfs_user",
+        JSON.stringify({
+          uid: user.uid,
+          name: userData.name || user.displayName || "User",
+          username: userData.username || "",
+          email: user.email,
+          avatar: userData.avatar || "",
+          balance: userData.balance || 0,
+        })
+      );
+
       setSnack({
         open: true,
-        message: "Invalid email or password.",
+        message: "Login successful!",
+        severity: "success",
+      });
+
+      // ✅ Redirect after success
+      setTimeout(() => navigate("/"), 1500);
+    } catch (err) {
+      console.error("Login error:", err.code);
+      let errorMsg = "Login failed. Please try again.";
+
+      switch (err.code) {
+        case "auth/invalid-email":
+          errorMsg = "Invalid email address.";
+          break;
+        case "auth/user-not-found":
+          errorMsg = "No user found with this email.";
+          break;
+        case "auth/wrong-password":
+          errorMsg = "Incorrect password.";
+          break;
+        case "auth/too-many-requests":
+          errorMsg = "Too many failed attempts. Try again later.";
+          break;
+        default:
+          errorMsg = err.message;
+      }
+
+      setSnack({
+        open: true,
+        message: errorMsg,
         severity: "error",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    // Successful login
-    localStorage.setItem("qfs_logged_in", "true");
-
-    setSnack({
-      open: true,
-      message: "Login successful!",
-      severity: "success",
-    });
-
-    setTimeout(() => navigate("/"), 1500);
   };
 
   return (
@@ -78,7 +128,7 @@ export default function Login() {
       {/* 🔷 App Logo */}
       <Box
         component="img"
-        src="/logo.png" // must be in public folder
+        src="/logo.png"
         alt="CryptoBank Logo"
         sx={{
           width: 250,
@@ -123,7 +173,9 @@ export default function Login() {
             InputProps={{ style: { color: "#e6edf3" } }}
             sx={{
               "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
-              "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
+              "& .MuiOutlinedInput-root:hover fieldset": {
+                borderColor: "#00ffcc",
+              },
               "& .MuiOutlinedInput-root.Mui-focused fieldset": {
                 borderColor: "#00ffcc",
               },
@@ -143,7 +195,9 @@ export default function Login() {
             InputProps={{ style: { color: "#e6edf3" } }}
             sx={{
               "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
-              "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
+              "& .MuiOutlinedInput-root:hover fieldset": {
+                borderColor: "#00ffcc",
+              },
               "& .MuiOutlinedInput-root.Mui-focused fieldset": {
                 borderColor: "#00ffcc",
               },
@@ -153,6 +207,7 @@ export default function Login() {
           <Button
             fullWidth
             type="submit"
+            disabled={loading}
             sx={{
               mt: 3,
               background: "#00ffcc",
@@ -161,12 +216,12 @@ export default function Login() {
               "&:hover": { background: "#00d4aa" },
             }}
           >
-            Login
+            {loading ? "Logging in..." : "Login"}
           </Button>
         </form>
 
         <Typography align="center" sx={{ mt: 2, color: "#8b949e" }}>
-          Don't have an account?{" "}
+          Don’t have an account?{" "}
           <Link
             component="button"
             onClick={() => navigate("/register")}

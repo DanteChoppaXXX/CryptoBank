@@ -27,7 +27,7 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 export default function Layout() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [user, setUser] = useState(null); // safer default
+  const [user, setUser] = useState(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -40,20 +40,29 @@ export default function Layout() {
 
   const toggleDrawer = () => setDrawerOpen(!drawerOpen);
 
-  // ✅ Load persisted user from localStorage on mount
- useEffect(() => {
-  const storedUser = localStorage.getItem("qfs_user");
-  const isLoggedIn = localStorage.getItem("qfs_logged_in") === "true";
+  // ✅ Safe user loading from localStorage
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem("qfs_user");
+      const isLoggedIn = localStorage.getItem("qfs_logged_in") === "true";
 
-  if (!isLoggedIn) {
-    navigate("/login");
-    return;
-  }
+      if (!isLoggedIn) {
+        navigate("/login");
+        return;
+      }
 
-  if (storedUser) {
-    setUser(JSON.parse(storedUser));
-  }
-}, [navigate]);
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+      } else {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error("Failed to parse qfs_user from localStorage:", err);
+      setUser(null);
+      localStorage.removeItem("qfs_user"); // optional cleanup
+    }
+  }, [navigate]);
 
   // ✅ When ProfileDrawer updates user info
   const handleProfileUpdate = (updatedUser) => {
@@ -136,9 +145,8 @@ export default function Layout() {
                   fontSize: "1rem",
                 }}
               >
-                {/* Fallback initial or '?' */}
                 {!user?.avatar &&
-                  (user?.name?.charAt(0)?.toUpperCase() || "")}
+                  (user?.name?.charAt(0)?.toUpperCase() || "?")}
               </Avatar>
             </IconButton>
           </Tooltip>

@@ -10,10 +10,24 @@ import {
   Link,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import {
+  doc,
+  setDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 export default function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    name: "",
     username: "",
     email: "",
     password: "",
@@ -24,39 +38,111 @@ export default function Register() {
     message: "",
     severity: "error",
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    setLoading(true);
 
-    const { username, email, password, confirm } = formData;
+    const { name, username, email, password, confirm } = formData;
 
-    if (!username || !email || !password || !confirm) {
-      setSnack({ open: true, message: "All fields are required.", severity: "error" });
+    // ✅ Input validation
+    if (!name || !username || !email || !password || !confirm) {
+      setSnack({
+        open: true,
+        message: "All fields are required.",
+        severity: "error",
+      });
+      setLoading(false);
       return;
     }
 
     if (password !== confirm) {
-      setSnack({ open: true, message: "Passwords do not match.", severity: "error" });
+      setSnack({
+        open: true,
+        message: "Passwords do not match.",
+        severity: "error",
+      });
+      setLoading(false);
       return;
     }
 
-    // Save user in localStorage (simulate registration)
-    const userData = { username, email, password, balance: 0, avatar: "" };
-    localStorage.setItem("qfs_user", JSON.stringify(userData));
-    localStorage.setItem("qfs_transactions", JSON.stringify([]));
+    try {
+      // 🔎 Check if username already exists in Firestore
+      const usernameQuery = query(
+        collection(db, "users"),
+        where("username", "==", username)
+      );
+      const usernameSnapshot = await getDocs(usernameQuery);
+      if (!usernameSnapshot.empty) {
+        setSnack({
+          open: true,
+          message: "Username is already taken.",
+          severity: "error",
+        });
+        setLoading(false);
+        return;
+      }
 
-    setSnack({ open: true, message: "Registration successful!", severity: "success" });
-    
-    // ✅ Mark as logged in
-    localStorage.setItem("qfs_logged_in", "true");
-      
-    setTimeout(() => {
-      navigate("/"); // redirect to dashboard
-    }, 1500);
+      // ✅ Create user with Firebase Auth
+      const userCred = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCred.user;
+
+      // ✅ Set display name
+      await updateProfile(user, { displayName: name });
+
+      // ✅ Save user info to Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        name,
+        username,
+        email,
+        balance: 0,
+        avatar: "",
+        createdAt: new Date().toISOString(),
+      });
+
+      // ✅ Save login state locally
+      localStorage.setItem("qfs_logged_in", "true");
+      localStorage.setItem(
+        "qfs_user",
+        JSON.stringify({
+          uid: user.uid,
+          name,
+          username,
+          email,
+        })
+      );
+
+      setSnack({
+        open: true,
+        message: "Registration successful! Logging you in...",
+        severity: "success",
+      });
+
+      setTimeout(() => navigate("/"), 1500);
+    } catch (err) {
+      console.error(err);
+      let message = err.message;
+      if (message.includes("email-already-in-use")) {
+        message = "Email already exists.";
+      }
+      setSnack({
+        open: true,
+        message,
+        severity: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,21 +158,13 @@ export default function Register() {
         flexDirection: "column",
       }}
     >
-      {/* 🔷 App Logo Section */}
       <Box
         component="img"
-        src="/logo.png" // <-- place your logo in public/logo.png
+        src="/logo.png"
         alt="CryptoBank Logo"
-        sx={{
-          width: 250,
-          height: 100,
-          mb: 3,
-          opacity: 0.9,
-          p: 1,
-        }}
+        sx={{ width: 250, height: 100, mb: 3, opacity: 0.9, p: 1 }}
       />
 
-      {/* 🔷 Registration Card */}
       <Paper
         elevation={3}
         sx={{
@@ -109,25 +187,20 @@ export default function Register() {
         <form onSubmit={handleSubmit}>
           <TextField
             fullWidth
+            label="Full Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
             label="Username"
             name="username"
             value={formData.username}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
-            InputLabelProps={{ style: { color: "#c9d1d9" } }}
-            InputProps={{
-              style: { color: "#e6edf3" },
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
-              "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
-              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-                borderColor: "#00ffcc",
-              },
-            }}
           />
-
           <TextField
             fullWidth
             label="Email"
@@ -136,20 +209,7 @@ export default function Register() {
             value={formData.email}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
-            InputLabelProps={{ style: { color: "#c9d1d9" } }}
-            InputProps={{
-              style: { color: "#e6edf3" },
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
-              "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
-              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-                borderColor: "#00ffcc",
-              },
-            }}
           />
-
           <TextField
             fullWidth
             label="Password"
@@ -158,20 +218,7 @@ export default function Register() {
             value={formData.password}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
-            InputLabelProps={{ style: { color: "#c9d1d9" } }}
-            InputProps={{
-              style: { color: "#e6edf3" },
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
-              "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
-              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-                borderColor: "#00ffcc",
-              },
-            }}
           />
-
           <TextField
             fullWidth
             label="Confirm Password"
@@ -180,23 +227,12 @@ export default function Register() {
             value={formData.confirm}
             onChange={handleChange}
             margin="normal"
-            variant="outlined"
-            InputLabelProps={{ style: { color: "#c9d1d9" } }}
-            InputProps={{
-              style: { color: "#e6edf3" },
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root fieldset": { borderColor: "#30363d" },
-              "& .MuiOutlinedInput-root:hover fieldset": { borderColor: "#00ffcc" },
-              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
-                borderColor: "#00ffcc",
-              },
-            }}
           />
 
           <Button
             fullWidth
             type="submit"
+            disabled={loading}
             sx={{
               mt: 3,
               background: "#00ffcc",
@@ -205,7 +241,7 @@ export default function Register() {
               "&:hover": { background: "#00d4aa" },
             }}
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </Button>
         </form>
 
@@ -221,7 +257,6 @@ export default function Register() {
         </Typography>
       </Paper>
 
-      {/* Snackbar Notifications */}
       <Snackbar
         open={snack.open}
         autoHideDuration={4000}

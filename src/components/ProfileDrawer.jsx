@@ -15,6 +15,10 @@ import CloseIcon from "@mui/icons-material/Close";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useNavigate } from "react-router-dom";
+import { auth, db } from "../firebase";
+import { signOut, updateProfile } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) {
   const [user, setUser] = useState(initialData || {});
@@ -35,7 +39,8 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
     setUser({ ...user, [field]: value });
   };
 
-  const handleImageUpload = (e) => {
+  // 🧠 Upload avatar (local only for now)
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -46,37 +51,85 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
       });
       return;
     }
+
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const updatedUser = { ...user, avatar: event.target.result };
+    reader.onload = async (event) => {
+      const imageData = event.target.result;
+      const updatedUser = { ...user, avatar: imageData };
       setUser(updatedUser);
-      localStorage.setItem("qfs_user", JSON.stringify(updatedUser));
-      onUpdate(updatedUser);
+
+      // ✅ Save avatar to Firestore (optional: switch to Storage later)
+      try {
+        await updateDoc(doc(db, "users", user.uid), { avatar: imageData });
+        localStorage.setItem("qfs_user", JSON.stringify(updatedUser));
+        onUpdate(updatedUser);
+        setSnack({
+          open: true,
+          message: "Avatar updated successfully!",
+          severity: "success",
+        });
+      } catch (err) {
+        console.error("Avatar update error:", err);
+        setSnack({
+          open: true,
+          message: "Failed to update avatar.",
+          severity: "error",
+        });
+      }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSave = () => {
-    setEditMode(false);
-    localStorage.setItem("qfs_user", JSON.stringify(user));
-    onUpdate(user);
-    setSnack({
-      open: true,
-      message: "Profile updated successfully!",
-      severity: "success",
-    });
+  // 💾 Save edited profile to Firestore
+  const handleSave = async () => {
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        bio: user.bio || "",
+      });
+
+      // ✅ Update Firebase Auth display name
+      if (auth.currentUser) {
+        await updateProfile(auth.currentUser, {
+          displayName: user.name,
+        });
+      }
+
+      // ✅ Local cache
+      localStorage.setItem("qfs_user", JSON.stringify(user));
+      onUpdate(user);
+
+      setEditMode(false);
+      setSnack({
+        open: true,
+        message: "Profile updated successfully!",
+        severity: "success",
+      });
+    } catch (err) {
+      console.error("Profile update error:", err);
+      setSnack({
+        open: true,
+        message: "Error updating profile.",
+        severity: "error",
+      });
+    }
   };
 
   const handleCancel = () => setEditMode(false);
 
- // --- 🧹 Sign Out Handler (updated) ---
-    const handleSignOut = () => {
-      // Keep user profile data intact
+  // 🚪 Firebase Sign-Out
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
       localStorage.setItem("qfs_logged_in", "false");
+      localStorage.removeItem("qfs_user");
 
       setSnack({
         open: true,
-        message: "You have been signed out.",
+        message: "Signed out successfully.",
         severity: "info",
       });
 
@@ -84,7 +137,15 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
         onClose();
         navigate("/login");
       }, 1200);
-    };
+    } catch (err) {
+      console.error("Sign-out error:", err);
+      setSnack({
+        open: true,
+        message: "Error signing out.",
+        severity: "error",
+      });
+    }
+  };
 
   return (
     <>
@@ -148,8 +209,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
                 fontWeight: 700,
               }}
             >
-              {!user?.avatar &&
-                (user?.name?.charAt(0)?.toUpperCase() || "")}
+              {!user?.avatar && user?.name?.charAt(0)?.toUpperCase()}
             </Avatar>
 
             {editMode && (
@@ -313,6 +373,7 @@ export default function ProfileDrawer({ open, onClose, onUpdate, initialData }) 
         </Box>
       </Drawer>
 
+      {/* Snackbar */}
       <Snackbar
         open={snack.open}
         autoHideDuration={3000}

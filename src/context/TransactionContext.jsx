@@ -1,53 +1,104 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
+import {
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc,
+  addDoc,
+  collection,
+  onSnapshot,
+  query,
+  where,
+  orderBy,
+  serverTimestamp,
+} from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 const TransactionContext = createContext();
 
 export const TransactionProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [balanceUSD, setBalanceUSD] = useState(0);
-
+  const [loading, setLoading] = useState(true);
   const BTC_RATE = 68000;
 
-  // --- LOAD FROM LOCALSTORAGE ON STARTUP ---
+  // --- Watch Firebase Auth user ---
   useEffect(() => {
-    const savedBalance = localStorage.getItem("qfs_balance");
-    const savedTransactions = localStorage.getItem("qfs_transactions");
+    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
 
-    if (savedBalance) setBalanceUSD(parseFloat(savedBalance));
-    if (savedTransactions) setTransactions(JSON.parse(savedTransactions));
+        // Ensure user doc exists
+        const snap = await getDoc(userRef);
+        if (!snap.exists()) {
+          await setDoc(userRef, { balanceUSD: 0 });
+        } else {
+          setBalanceUSD(snap.data().balanceUSD || 0);
+        }
+
+        // Realtime listener for balance
+        const unsubUser = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setBalanceUSD(docSnap.data().balanceUSD || 0);
+          }
+        });
+
+        // Realtime listener for transactions
+        const q = query(
+          collection(db, "transactions"),
+          where("userId", "==", user.uid),
+          orderBy("createdAt", "desc")
+        );
+        const unsubTx = onSnapshot(q, (snapshot) => {
+          const txs = snapshot.docs.map((d) => ({
+            id: d.id,
+            ...d.data(),
+          }));
+          setTransactions(txs);
+          setLoading(false);
+        });
+
+        return () => {
+          unsubUser();
+          unsubTx();
+        };
+      } else {
+        setTransactions([]);
+        setBalanceUSD(0);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribeAuth();
   }, []);
 
-  // --- SAVE WHENEVER SOMETHING CHANGES ---
-  useEffect(() => {
-    localStorage.setItem("qfs_balance", balanceUSD);
-    localStorage.setItem("qfs_transactions", JSON.stringify(transactions));
-  }, [balanceUSD, transactions]);
+  // --- Add transaction ---
+  const addTransaction = async (type, amountUSD) => {
+    const user = auth.currentUser;
+    if (!user) return;
 
-  // --- ADD TRANSACTION ---
-  const addTransaction = (type, amountUSD) => {
+    const userRef = doc(db, "users", user.uid);
     const newBalance =
       type === "deposit" ? balanceUSD + amountUSD : balanceUSD - amountUSD;
 
-    const newTx = {
-      id: Date.now(),
-      type: type === "deposit" ? "Deposit" : "Withdraw",
-      amountUSD: amountUSD.toFixed(2),
+    // Update user balance
+    await updateDoc(userRef, { balanceUSD: newBalance });
+    setBalanceUSD(newBalance);
+
+    // Record transaction
+    await addDoc(collection(db, "transactions"), {
+      userId: user.uid,
+      type,
+      amountUSD,
       amountBTC: (amountUSD / BTC_RATE).toFixed(6),
       status: "Success",
-      date: new Date().toLocaleString(),
-    };
-
-    setBalanceUSD(newBalance);
-    setTransactions((prev) => [newTx, ...prev]);
+      createdAt: serverTimestamp(),
+    });
   };
 
-  // --- CLEAR ALL DATA (for testing or logout) ---
   const resetData = () => {
     setBalanceUSD(0);
     setTransactions([]);
-    localStorage.removeItem("qfs_balance");
-    localStorage.removeItem("qfs_transactions");
   };
 
   return (
@@ -55,6 +106,7 @@ export const TransactionProvider = ({ children }) => {
       value={{
         transactions,
         balanceUSD,
+        loading,
         addTransaction,
         resetData,
       }}

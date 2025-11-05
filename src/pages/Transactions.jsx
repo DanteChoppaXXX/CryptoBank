@@ -19,32 +19,39 @@ import {
 import { useTransactions } from "../context/TransactionContext";
 
 export default function Transactions() {
-  const { transactions } = useTransactions();
+  const { transactions } = useTransactions(); // ✅ Use from context
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [search, setSearch] = useState("");
 
+  const loading = transactions === null;
+
   // --- Derived data ---
   const filteredTransactions = useMemo(() => {
+    if (!transactions) return [];
+
     let filtered = [...transactions];
 
-    // Filter by type
     if (filterType !== "all") {
       filtered = filtered.filter((tx) => tx.type === filterType);
     }
 
-    // Search by amount
     if (search.trim() !== "") {
       filtered = filtered.filter((tx) =>
-        tx.amountUSD.toString().includes(search)
+        tx.amountUSD?.toString().includes(search)
       );
     }
 
-    // Sort
     if (sortBy === "newest") {
-      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+      filtered.sort(
+        (a, b) =>
+          (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+      );
     } else if (sortBy === "oldest") {
-      filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+      filtered.sort(
+        (a, b) =>
+          (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)
+      );
     } else if (sortBy === "highest") {
       filtered.sort((a, b) => b.amountUSD - a.amountUSD);
     } else if (sortBy === "lowest") {
@@ -158,9 +165,7 @@ export default function Transactions() {
           border: "1px solid #30363d",
           borderRadius: "12px",
           overflowX: "auto",
-          "&::-webkit-scrollbar": {
-            height: 8,
-          },
+          "&::-webkit-scrollbar": { height: 8 },
           "&::-webkit-scrollbar-thumb": {
             backgroundColor: "#00ffcc",
             borderRadius: "10px",
@@ -170,28 +175,25 @@ export default function Transactions() {
         <Table stickyHeader>
           <TableHead sx={{ background: "rgba(255,255,255,0.08)" }}>
             <TableRow>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>
-                Type
-              </TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>
-                Amount (USD)
-              </TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>
-                Amount (BTC)
-              </TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>
-                Status
-              </TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>
-                Date
-              </TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>
-                Transaction ID
-              </TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Type</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Amount (USD)</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Amount (BTC)</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Status</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Date</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Transaction ID</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredTransactions.length > 0 ? (
+            {loading ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  sx={{ textAlign: "center", color: "#8b949e", py: 3 }}
+                >
+                  Loading transactions...
+                </TableCell>
+              </TableRow>
+            ) : filteredTransactions.length > 0 ? (
               filteredTransactions.map((tx) => (
                 <TableRow key={tx.id}>
                   <TableCell>{tx.type}</TableCell>
@@ -218,16 +220,23 @@ export default function Transactions() {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    {new Date(tx.date).toLocaleString("en-US", {
-                      hour12: true,
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {tx.createdAt?.seconds
+                      ? new Date(tx.createdAt.seconds * 1000).toLocaleString(
+                          "en-US",
+                          {
+                            hour12: true,
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )
+                      : "—"}
                   </TableCell>
-                  <TableCell sx={{ fontFamily: "monospace", color: "#00ffcc" }}>
+                  <TableCell
+                    sx={{ fontFamily: "monospace", color: "#00ffcc" }}
+                  >
                     {tx.id}
                   </TableCell>
                 </TableRow>
@@ -252,4 +261,3 @@ export default function Transactions() {
     </Box>
   );
 }
-
