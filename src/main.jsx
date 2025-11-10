@@ -14,6 +14,7 @@ import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import AdminPanel from "./pages/AdminPanel.jsx"
 
 // Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -30,6 +31,7 @@ const router = createBrowserRouter([
           { index: true, element: <Dashboard /> },
           { path: "transactions", element: <Transactions /> },
           { path: "settings", element: <Settings /> },
+          { path: "admin", element: <AdminPanel /> },
         ],
       },
     ],

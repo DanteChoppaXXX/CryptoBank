@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Box,
   Card,
@@ -16,98 +16,20 @@ import {
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import {
-  doc,
-  setDoc,
-  collection,
-  onSnapshot,
-  query,
-  where,
-  orderBy,
-  getDoc,
-} from "firebase/firestore";
-import { auth, db } from "../firebase";
 
 // ✅ Import modal components
 import DepositModal from "../components/DepositModal";
 import WithdrawModal from "../components/WithdrawModal";
 
-export default function Dashboard() {
-  const [balanceUSD, setBalanceUSD] = useState(0);
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [userLoaded, setUserLoaded] = useState(false);
+// ✅ Use TransactionContext
+import { useTransactions } from "../context/TransactionContext";
 
-  // Modal visibility
+export default function Dashboard() {
+  const { balanceUSD, transactions, loading } = useTransactions();
   const [openDeposit, setOpenDeposit] = useState(false);
   const [openWithdraw, setOpenWithdraw] = useState(false);
 
   const BTC_RATE = 68000;
-
-  useEffect(() => {
-    setLoading(true);
-
-    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        // User is not logged in
-        setUserLoaded(false);
-        setBalanceUSD(0);
-        setTransactions([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setUserLoaded(true);
-        const userRef = doc(db, "users", user.uid);
-        const docSnap = await getDoc(userRef);
-
-        // Create user doc if missing
-        if (!docSnap.exists()) {
-          await setDoc(userRef, { balanceUSD: 0 });
-          setBalanceUSD(0);
-        } else {
-          setBalanceUSD(docSnap.data().balanceUSD || 0);
-        }
-
-        // Watch user balance in real-time
-        const unsubBalance = onSnapshot(userRef, (snap) => {
-          if (snap.exists()) setBalanceUSD(snap.data().balanceUSD || 0);
-        });
-
-        // Watch user transactions in real-time
-        const q = query(
-          collection(db, "transactions"),
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "desc")
-        );
-
-        const unsubTx = onSnapshot(q, (snapshot) => {
-          const txs = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-          setTransactions(txs);
-          setLoading(false);
-        });
-
-        // ✅ Proper cleanup
-        return () => {
-          unsubBalance();
-          unsubTx();
-        };
-      } catch (error) {
-        console.error("Error loading dashboard:", error);
-        setLoading(false);
-      }
-    });
-
-    // Fallback: stop spinner after 8s if Firebase hangs
-    const timeout = setTimeout(() => setLoading(false), 8000);
-
-    return () => {
-      clearTimeout(timeout);
-      unsubscribeAuth();
-    };
-  }, []);
-
   const balanceBTC = (balanceUSD / BTC_RATE).toFixed(4);
 
   const newsSlides = [
@@ -134,8 +56,7 @@ export default function Dashboard() {
     pauseOnHover: true,
   };
 
-  // 🌀 Loading state
-  if (loading || !userLoaded) {
+  if (loading) {
     return (
       <Box
         sx={{

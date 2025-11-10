@@ -5,88 +5,97 @@ import {
   Typography,
   Button,
   IconButton,
-  CircularProgress,
   Tooltip,
   Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { QRCodeCanvas } from "qrcode.react";
-import { auth, db } from "../firebase";
-import { doc, updateDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function DepositModal({ open, onClose }) {
   const [depositAddress, setDepositAddress] = useState("");
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
-  // Simulate address generation — later this can come from backend
+  // Fetch BTC address from Firestore
   useEffect(() => {
-    if (open) {
-      setDepositAddress("");
-      setSuccessMessage("");
-      setLoading(true);
+    const fetchWalletAddress = async () => {
+      try {
+        setLoading(true);
+        setDepositAddress("");
 
-      // Simulate async API call (e.g. to your backend)
-      setTimeout(() => {
-        // Replace this with real backend-generated address
-        const mockAddress = "bc1qexampledepositaddress12345xyz";
-        setDepositAddress(mockAddress);
+        const docRef = doc(db, "appSettings", "globalWallet");
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data?.btcAddress) {
+            setDepositAddress(data.btcAddress);
+          } else {
+            console.warn("No BTC address found in globalWallet document");
+          }
+        } else {
+          console.warn("globalWallet document not found in Firestore");
+        }
+      } catch (error) {
+        console.error("Error fetching BTC address:", error);
+      } finally {
         setLoading(false);
-      }, 1200);
-    }
+      }
+    };
+
+    if (open) fetchWalletAddress();
   }, [open]);
 
+  // Mobile-friendly copy function
   const handleCopy = async () => {
-    if (depositAddress) {
-      await navigator.clipboard.writeText(depositAddress);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+    if (!depositAddress) return;
+
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(depositAddress);
+      } catch (err) {
+        fallbackCopyTextToClipboard(depositAddress);
+      }
+    } else {
+      fallbackCopyTextToClipboard(depositAddress);
     }
+
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
-  // Simulate confirmation — this would be replaced by blockchain listener
-  const handleSimulateDeposit = async () => {
+  const fallbackCopyTextToClipboard = (text) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+
+    textArea.readOnly = true;
+    textArea.style.position = "absolute";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+
+    const selection = document.getSelection();
+    const selected = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+
+    textArea.select();
+    textArea.setSelectionRange(0, 99999); // Mobile compatibility
+
     try {
-      setLoading(true);
-      const user = auth.currentUser;
-      if (!user) throw new Error("User not signed in");
-
-      const amountUSD = 100; // Mock deposit
-      const BTC_RATE = 68000;
-      const amountBTC = (amountUSD / BTC_RATE).toFixed(5);
-
-      // Add transaction entry
-      await addDoc(collection(db, "transactions"), {
-        userId: user.uid,
-        type: "Deposit",
-        amountUSD,
-        amountBTC,
-        status: "Success",
-        createdAt: serverTimestamp(),
-      });
-
-      // Update user balance
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        balanceUSD: amountUSD + (await getCurrentBalance(user.uid)),
-      });
-
-      setSuccessMessage(`$${amountUSD} deposit confirmed!`);
+      document.execCommand("copy");
     } catch (err) {
-      console.error("Deposit error:", err);
-    } finally {
-      setLoading(false);
+      console.error("Fallback copy failed:", err);
     }
-  };
 
-  // Helper to get latest user balance
-  const getCurrentBalance = async (uid) => {
-    const userRef = doc(db, "users", uid);
-    const snap = await import("firebase/firestore").then((mod) => mod.getDoc(userRef));
-    if (snap.exists()) return snap.data().balanceUSD || 0;
-    return 0;
+    document.body.removeChild(textArea);
+
+    // Restore previous selection
+    if (selected) {
+      selection.removeAllRanges();
+      selection.addRange(selected);
+    }
   };
 
   return (
@@ -112,7 +121,7 @@ export default function DepositModal({ open, onClose }) {
 
           {loading ? (
             <CircularProgress sx={{ color: "#00ffcc", my: 4 }} />
-          ) : (
+          ) : depositAddress ? (
             <>
               <QRCodeCanvas
                 value={depositAddress}
@@ -120,50 +129,60 @@ export default function DepositModal({ open, onClose }) {
                 bgColor="transparent"
                 fgColor="#00ffcc"
               />
-              <Typography sx={{ mt: 2, mb: 1, fontSize: "0.9rem", color: "#ccc" }}>
-                Send only BTC to the address below:
+
+              <Typography sx={{ mt: 2, mb: 1, fontSize: "0.9rem", color: "#ff3b3b" }}>
+                Send only Bitcoin to the address below:
               </Typography>
+
               <Box
                 sx={{
                   background: "rgba(255,255,255,0.05)",
-                  p: 1.2,
+                  p: 1.5,
                   borderRadius: "8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
                   color: "#00ffcc",
                   fontSize: "0.85rem",
                   wordBreak: "break-all",
+                  mb: 2,
                 }}
               >
                 {depositAddress}
-                <Tooltip title="Copy address">
-                  <IconButton onClick={handleCopy} size="small" sx={{ color: "#00ffcc" }}>
-                    <ContentCopyIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
               </Box>
 
-              <Button
-                onClick={handleSimulateDeposit}
+              <Box
                 sx={{
-                  mt: 3,
-                  background: "#00ffcc",
-                  color: "#000",
-                  fontWeight: 600,
-                  borderRadius: "8px",
-                  px: 3,
-                  py: 1,
-                  "&:hover": { background: "#00d4aa" },
+                  display: "flex",
+                  justifyContent: "center",
                 }}
               >
-                Simulate Deposit
-              </Button>
+                <Button
+                  onClick={handleCopy}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    background: "rgba(0,255,204,0.1)",
+                    color: "#00ffcc",
+                    fontWeight: 600,
+                    borderRadius: "8px",
+                    px: 2,
+                    py: 1,
+                    "&:hover": { background: "rgba(0,255,204,0.2)" },
+                  }}
+                >
+                  <ContentCopyIcon fontSize="small" />
+                  Copy Address
+                </Button>
+              </Box>
             </>
+          ) : (
+            <Typography sx={{ color: "#ff6b6b", mt: 2 }}>
+              No deposit address configured.
+            </Typography>
           )}
         </Box>
       </Modal>
 
+      {/* Snackbar for copy */}
       <Snackbar
         open={copied}
         autoHideDuration={1500}
@@ -171,17 +190,6 @@ export default function DepositModal({ open, onClose }) {
       >
         <Alert severity="success" sx={{ background: "#00ffcc", color: "#000" }}>
           Address copied!
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        open={!!successMessage}
-        autoHideDuration={3000}
-        onClose={() => setSuccessMessage("")}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity="success" sx={{ background: "#00ffcc", color: "#000" }}>
-          {successMessage}
         </Alert>
       </Snackbar>
     </>
