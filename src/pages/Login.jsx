@@ -153,8 +153,8 @@ export default function Login() {
       >
         <Typography
           variant="h5"
-          align="left"
-          sx={{ mb: 3, fontWeight: 520, color: "#fffffc" }}
+          align="center"
+          sx={{ mb: 3, fontWeight: 600, color: "#00ffcc" }}
         >
           Welcome Back
         </Typography>
@@ -210,6 +210,7 @@ export default function Login() {
             disabled={loading}
             sx={{
               mt: 3,
+              borderRadius: 8,
               background: "#00ffcc",
               color: "#000",
               fontWeight: 600,
