@@ -40,7 +40,6 @@ export default function Layout() {
 
   const toggleDrawer = () => setDrawerOpen(!drawerOpen);
 
-  // ✅ Safe user loading from localStorage
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("qfs_user");
@@ -52,19 +51,17 @@ export default function Layout() {
       }
 
       if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
+        setUser(JSON.parse(storedUser));
       } else {
         setUser(null);
       }
     } catch (err) {
       console.error("Failed to parse qfs_user from localStorage:", err);
       setUser(null);
-      localStorage.removeItem("qfs_user"); // optional cleanup
+      localStorage.removeItem("qfs_user");
     }
   }, [navigate]);
 
-  // ✅ When ProfileDrawer updates user info
   const handleProfileUpdate = (updatedUser) => {
     setUser(updatedUser);
     localStorage.setItem("qfs_user", JSON.stringify(updatedUser));
@@ -83,76 +80,84 @@ export default function Layout() {
       <CssBaseline />
 
       {/* 🌟 Top AppBar */}
-      <AppBar
-        position="sticky"
-        sx={{
-          bgcolor: "#161b22",
-          borderBottom: "1px solid #30363d",
-          color: "#e6edf3",
-        }}
-      >
-        <Toolbar>
-          {/* Sidebar toggle (mobile) */}
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={toggleDrawer}
-            sx={{ mr: 2, display: { sm: "none" } }}
-          >
-            <MenuIcon />
+     <AppBar
+      position="sticky"
+      sx={{
+        bgcolor: "#161b22",
+        borderBottom: "1px solid #30363d",
+        color: "#e6edf3",
+      }}
+    >
+      <Toolbar sx={{ display: "flex", alignItems: "center" }}>
+        {/* Sidebar toggle (mobile) */}
+        <IconButton
+          color="inherit"
+          edge="start"
+          onClick={toggleDrawer}
+          sx={{ mr: 2, display: { sm: "none" } }}
+        >
+          <MenuIcon />
+        </IconButton>
+
+        {/* 🖼️ Logo */}
+        <Box
+          component="img"
+          src="/logo.png"
+          alt="CryptoBank Logo"
+          sx={{
+            height: "auto",
+            width: 160,
+            cursor: "pointer",
+            borderRadius: 1,
+            opacity: 0.9,
+          }}
+          onClick={() => navigate("/")}
+        />
+
+        {/* This box grows to push avatar right (works on all viewports) */}
+        <Box sx={{ flexGrow: 1 }} />
+
+        {/* 🌐 Desktop Nav Links */}
+        <Box sx={{ display: { xs: "none", sm: "flex" }, mr: 3 }}>
+          {navLinks.map((link) => (
+            <Typography
+              key={link.text}
+              component="a"
+              onClick={() => navigate(link.path)}
+              sx={{
+                ml: 3,
+                cursor: "pointer",
+                textDecoration: "none",
+                color: location.pathname === link.path ? "#00ffcc" : "#c9d1d9",
+                "&:hover": { color: "#00ffcc" },
+                fontWeight: 500,
+              }}
+            >
+              {link.text}
+            </Typography>
+          ))}
+        </Box>
+
+        {/* 👤 User Avatar */}
+        <Tooltip title={user?.name || "Profile"}>
+          <IconButton onClick={() => setProfileOpen(true)} sx={{ p: 0 }}>
+            <Avatar
+              src={user?.avatar || ""}
+              sx={{
+                bgcolor: "#00ffcc",
+                color: "#000",
+                fontWeight: 700,
+                width: 36,
+                height: 36,
+                fontSize: "1rem",
+              }}
+            >
+              {!user?.avatar && (user?.name?.charAt(0)?.toUpperCase() || "?")}
+            </Avatar>
           </IconButton>
-
-          <Typography
-            variant="h6"
-            sx={{ flexGrow: 1, fontWeight: 700, color: "#00ffcc" }}
-          >
-            QFS
-          </Typography>
-
-          {/* 🌐 Desktop Nav Links */}
-          <Box sx={{ display: { xs: "none", sm: "flex" }, mr: 3 }}>
-            {navLinks.map((link) => (
-              <Typography
-                key={link.text}
-                component="a"
-                onClick={() => navigate(link.path)}
-                sx={{
-                  ml: 3,
-                  cursor: "pointer",
-                  textDecoration: "none",
-                  color:
-                    location.pathname === link.path ? "#00ffcc" : "#c9d1d9",
-                  "&:hover": { color: "#00ffcc" },
-                  fontWeight: 500,
-                }}
-              >
-                {link.text}
-              </Typography>
-            ))}
-          </Box>
-
-          {/* 👤 User Avatar (Profile Drawer trigger) */}
-          <Tooltip title={user?.name || "Profile"}>
-            <IconButton onClick={() => setProfileOpen(true)} sx={{ p: 0 }}>
-              <Avatar
-                src={user?.avatar || ""}
-                sx={{
-                  bgcolor: "#00ffcc",
-                  color: "#000",
-                  fontWeight: 700,
-                  width: 36,
-                  height: 36,
-                  fontSize: "1rem",
-                }}
-              >
-                {!user?.avatar &&
-                  (user?.name?.charAt(0)?.toUpperCase() || "?")}
-              </Avatar>
-            </IconButton>
-          </Tooltip>
-        </Toolbar>
-      </AppBar>
-
+        </Tooltip>
+      </Toolbar>
+    </AppBar>
       {/* 📱 Sidebar Drawer (mobile) */}
       <Drawer
         anchor="left"
@@ -167,13 +172,26 @@ export default function Layout() {
           },
         }}
       >
-        <Box sx={{ p: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{ mb: 2, color: "#00ffcc", fontWeight: 700 }}
-          >
-            QFS
-          </Typography>
+        <Box sx={{ p: 2, textAlign: "center" }}>
+          {/* 🖼️ Larger logo for Drawer */}
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="CryptoBank Logo"
+            sx={{
+              width: 160,
+              height: "auto",
+              mx: "auto",
+              mb: 2,
+              cursor: "pointer",
+              borderRadius: 1,
+              opacity: 0.95,
+            }}
+            onClick={() => {
+              navigate("/");
+              toggleDrawer();
+            }}
+          />
           <Divider sx={{ mb: 2, borderColor: "#30363d" }} />
           <List>
             {navLinks.map((link) => (
