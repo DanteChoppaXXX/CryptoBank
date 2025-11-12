@@ -12,8 +12,8 @@ import { TransactionProvider } from "./context/TransactionContext";
 import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Settings from "./pages/Settings";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 import AdminPanel from "./pages/AdminPanel.jsx"
 
 // Routes
