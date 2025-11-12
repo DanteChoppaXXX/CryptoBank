@@ -13,13 +13,13 @@ import {
   Button,
   CircularProgress,
 } from "@mui/material";
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
 
 // ✅ Import modal components
 import DepositModal from "../components/DepositModal";
 import WithdrawModal from "../components/WithdrawModal";
+
+// ✅ Import slideshow component
+import SlideShow from "../components/SlideShow";
 
 // ✅ Use TransactionContext
 import { useTransactions } from "../context/TransactionContext";
@@ -31,30 +31,6 @@ export default function Dashboard() {
 
   const BTC_RATE = 68000;
   const balanceBTC = (balanceUSD / BTC_RATE).toFixed(4);
-
-  const newsSlides = [
-    {
-      title: "Bitcoin hits $68,000 as ETF inflows surge",
-      img: "https://cryptologos.cc/logos/bitcoin-btc-logo.png",
-    },
-    {
-      title: "Crypto adoption in Africa grows 20% this quarter",
-      img: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    },
-    {
-      title: "Institutional investors eye BTC long positions again",
-      img: "https://cryptologos.cc/logos/cardano-ada-logo.png",
-    },
-  ];
-
-  const sliderSettings = {
-    dots: false,
-    infinite: true,
-    autoplay: true,
-    autoplaySpeed: 3500,
-    arrows: false,
-    pauseOnHover: true,
-  };
 
   if (loading) {
     return (
@@ -193,40 +169,8 @@ export default function Dashboard() {
         </Paper>
       </Box>
 
-      {/* NEWS SLIDER */}
-      <Box>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Bitcoin News
-        </Typography>
-        <Slider {...sliderSettings}>
-          {newsSlides.map((slide, i) => (
-            <Box
-              key={i}
-              sx={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid #30363d",
-                borderRadius: "12px",
-                p: 3,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 3,
-                minHeight: 120,
-              }}
-            >
-              <Typography variant="subtitle1" sx={{ flex: 1 }}>
-                {slide.title}
-              </Typography>
-              <Box
-                component="img"
-                src={slide.img}
-                alt={slide.title}
-                sx={{ width: 60, height: 60, objectFit: "contain", opacity: 0.8 }}
-              />
-            </Box>
-          ))}
-        </Slider>
-      </Box>
+      {/* ✅ REPLACED OLD SLIDER WITH COMPONENT */}
+      <SlideShow />
 
       {/* MODALS */}
       <DepositModal open={openDeposit} onClose={() => setOpenDeposit(false)} />
