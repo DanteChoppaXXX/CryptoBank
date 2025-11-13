@@ -1,38 +1,36 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import '../layout/QuantumHome.css';
+import VideoSection from "../components/VideoSection";
+import AppBar from "../components/AppBar";
 
 const QuantumHome = () => {
   return (
     <div className="quantum-home">
+      <AppBar/>
       {/* Hero Section */}
       <section className="hero">
         <div className="hero-content">
-          <h1>Quantum Financial System</h1>
-          <p>Best Way To Bank And Secure Your Finances With The QFS</p>
+          <h3>Quantum Financial System</h3>
+          <h2>Best Way To Bank And Secure Your Finances With The QFS</h2>
           <p>Quantum Financial System is a decentralized digital banking system, specially designed in partnership with Nesara/Gesara to bring a whole new system to the banking world with strongly backed digital assets and to ensure your finances are safe.</p>
           <div className="hero-buttons">
-            <button>Login</button>
-            <button>Join Us</button>
+            <Link to="/login" className="btn">Login</Link>
+            <Link to="/register" className="btn btn-primary">Join us</Link>
           </div>
         </div>
       </section>
 
       {/* Video Section */}
-      <section className="video-section">
-        <h2>About QFS</h2>
-        <video controls className="intro-video">
-          <source src="your-video-source.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
-      </section>
-
+      <VideoSection /> 
+      
       {/* Images Section */}
       <section className="images-section">
-        <h2>Gallery</h2>
+        <h2>Get Ready for revolutionary Financial System</h2>
         <div className="images-grid">
-          <img src="image1.jpg" alt="Gallery Image 1" />
-          <img src="image2.jpg" alt="Gallery Image 2" />
-          <img src="image3.jpg" alt="Gallery Image 3" />
+          <img src="/assets/woman_paying_with_creditcard.jpg" alt="Gallery Image 1" />
+          <img src="/assets/receptionist_returning_creditcard.jpg" alt="Gallery Image 2" />
+          <img src="/assets/woman_with_laptop.jpg" alt="Gallery Image 3" />
         </div>
       </section>
 
@@ -67,6 +65,10 @@ const QuantumHome = () => {
         </div>
       </section>
 
+      <div className="images-grid">
+          <img src="/assets/creditcard1.jpg" alt="Gallery Image 1" />
+      </div>
+
       {/* Why Choose QFS Section */}
       <section className="why-choose">
         <h2>Why Choose QFS</h2>
@@ -90,6 +92,10 @@ const QuantumHome = () => {
         </div>
       </section>
 
+      <div className="images-grid">
+          <img src="/assets/creditcard3.jpg" alt="Gallery Image 1" />
+      </div>
+
       {/* How We Work Section */}
       <section className="how-we-work">
         <h2>How We Work</h2>
@@ -110,17 +116,28 @@ const QuantumHome = () => {
             <p>Bid for the new QFS cards that allow you to shop worldwide.</p>
           </div>
         </div>
-        <button className="get-started">Get Started</button>
-      </section>
+        <Link to="/register" className="get-started">Get Started</Link>      </section>
+
+      <div className="images-grid">
+          <img src="/assets/creditcard2.png" alt="Gallery Image 1" />
+      </div>
+
 
       {/* Footer Section */}
-      <footer>
-        <p>JOIN THE BIGGEST FINANCIAL REVOLUTIONARY SYSTEM DESIGNED TO OVERTAKE THE WORLD'S BANKING SYSTEM BY ELIMINATING CONTROL OF MONEY BY CABALS.</p>
+    <footer className="footer">
+      <div className="footer-content">
+        <img
+          src="/logo.png"  // <-- replace with your logo path
+          alt="Quantum Secure Vault Logo"
+          className="footer-logo"
+        />
+        <h5>JOIN THE BIGGEST FINANCIAL REVOLUTIONARY SYSTEM DESIGNED TO OVERTAKE THE WORLD'S BANKING SYSTEM BY ELIMINATING CONTROL OF MONEY BY CABALS.</h5>
         <div className="contact">
-          <p>Email: support@quantumsecuredvault.com</p>
+          <p>Email: support@quantumsecuredvaults.com</p>
         </div>
-        <p>© 2024 Quantum Secured Vault</p>
-      </footer>
+        <p>© 2025 Quantum Secure Vaults. All rights reserved.</p>
+      </div>
+    </footer>
     </div>
   );
 };

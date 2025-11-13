@@ -7,19 +7,19 @@ import "slick-carousel/slick/slick-theme.css";
 export default function NewsSlideshow() {
   const newsSlides = [
     {
-      img: "/btc.jpg",
+      img: "/assets/btc.jpg",
       title: "An independent peer-to-peer network for transactions, free from central authority",
     },
     {
-      img: "/btc1.png",
+      img: "/assets/btc1.png",
       title: "Powered by the transparent and immutable blockchain ledger, ensuring secure transactions",
     },
     {
-      img: "/btc2.jpeg",
+      img: "/assets/btc2.jpeg",
       title: " A scarce digital asset with a fixed supply of 21 million coins",
     },
     {
-      img: "/btc3.webp",
+      img: "/assets/btc3.webp",
       title: "A potential hedge against inflation due to its fixed supply and deflationary model",
     },
 
