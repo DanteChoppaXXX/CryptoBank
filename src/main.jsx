@@ -38,7 +38,7 @@ const router = createBrowserRouter([
     ],
   },
 
-  // 🟦 Public (login/register only when logged out)
+  // 🟦 Public (homepage/login/register only when logged out)
   {
     element: <PublicRoute />,
     children: [
