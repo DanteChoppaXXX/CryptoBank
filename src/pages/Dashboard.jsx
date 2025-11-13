@@ -14,23 +14,18 @@ import {
   CircularProgress,
 } from "@mui/material";
 
-// ✅ Import modal components
 import DepositModal from "../components/DepositModal";
 import WithdrawModal from "../components/WithdrawModal";
-
-// ✅ Import slideshow component
 import SlideShow from "../components/SlideShow";
 
-// ✅ Use TransactionContext
 import { useTransactions } from "../context/TransactionContext";
 
 export default function Dashboard() {
-  const { balanceUSD, transactions, loading } = useTransactions();
+  const { balanceUSD, transactions, loading, btcRate } = useTransactions();
   const [openDeposit, setOpenDeposit] = useState(false);
   const [openWithdraw, setOpenWithdraw] = useState(false);
 
-  const BTC_RATE = 68000;
-  const balanceBTC = (balanceUSD / BTC_RATE).toFixed(4);
+  const balanceBTC = btcRate ? (balanceUSD / btcRate).toFixed(6) : "…";
 
   if (loading) {
     return (
@@ -72,6 +67,14 @@ export default function Dashboard() {
           <Typography variant="subtitle1" sx={{ color: "#8b949e", mt: 0.5 }}>
             ≈ {balanceBTC} BTC
           </Typography>
+
+          {/* ✅ Live BTC Rate Display */}
+      {/*<Typography
+            variant="body2"
+            sx={{ color: "#6ee7b7", mt: 1, fontSize: "0.9rem", fontWeight: 500 }}
+          >
+            1 BTC = ${btcRate ? btcRate.toLocaleString() : "Loading..."} USD
+          </Typography>*/}
 
           <Box sx={{ mt: 3 }}>
             <Button
@@ -169,7 +172,7 @@ export default function Dashboard() {
         </Paper>
       </Box>
 
-      {/* ✅ REPLACED OLD SLIDER WITH COMPONENT */}
+      {/* SLIDESHOW */}
       <SlideShow />
 
       {/* MODALS */}

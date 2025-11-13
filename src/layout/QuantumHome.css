@@ -1,0 +1,206 @@
+/* QuantumHome.css */
+
+.quantum-home {
+  font-family: 'Arial', sans-serif;
+  color: #0a0a0a;
+  line-height: 1.6;
+  background-color: #fdfdfd;
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(90deg, #0b1d2b, #132c44);
+  color: #ffffff;
+  text-align: center;
+  padding: 80px 20px;
+}
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+.hero p {
+  max-width: 700px;
+  margin: 10px auto;
+}
+.hero-buttons button {
+  margin: 10px;
+  padding: 12px 30px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #ffcc00;
+  color: #0b1d2b;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+.hero-buttons button:hover {
+  background-color: #ffb700;
+}
+
+/* Video Section */
+.video-section {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: #f5f7fa;
+}
+.video-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #132c44;
+}
+.intro-video {
+  width: 80%;
+  max-width: 800px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Images Section */
+.images-section {
+  text-align: center;
+  padding: 60px 20px;
+  background-color: #ffffff;
+}
+.images-section h2 {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  color: #132c44;
+}
+.images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+.images-grid img {
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.3s;
+}
+.images-grid img:hover {
+  transform: scale(1.05);
+}
+
+/* Features Section */
+.features {
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #f5f7fa;
+}
+.features h2 {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+  color: #132c44;
+}
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+.feature {
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.feature h3 {
+  margin-bottom: 10px;
+  color: #0b1d2b;
+}
+
+/* Why Choose QFS Section */
+.why-choose {
+  background-color: #132c44;
+  color: #ffffff;
+  padding: 60px 20px;
+  text-align: center;
+}
+.why-choose h2 {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+}
+.choose-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+.choose-grid div {
+  background: #0b1d2b;
+  padding: 20px;
+  border-radius: 10px;
+  color: #ffcc00;
+}
+.choose-grid div h3 {
+  margin-bottom: 10px;
+}
+
+/* How We Work Section */
+.how-we-work {
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #f5f7fa;
+}
+.how-we-work h2 {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+  color: #132c44;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+  margin-bottom: 40px;
+}
+.steps div {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.steps div h3 {
+  color: #ffcc00;
+}
+.steps div h4 {
+  color: #0b1d2b;
+  margin-bottom: 10px;
+}
+.get-started {
+  padding: 12px 30px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #ffcc00;
+  color: #0b1d2b;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+.get-started:hover {
+  background-color: #ffb700;
+}
+
+/* Footer */
+footer {
+  background: #0b1d2b;
+  color: #ffffff;
+  text-align: center;
+  padding: 60px 20px;
+}
+footer .contact p {
+  margin: 5px 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+  .features-grid, .choose-grid, .steps, .images-grid {
+    grid-template-columns: 1fr;
+  }
+  .intro-video {
+    width: 100%;
+  }
+}
+

@@ -15,6 +15,7 @@ import Settings from "./pages/Settings";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import AdminPanel from "./pages/AdminPanel.jsx"
+import Homepage from "./pages/Homepage.jsx"
 
 // Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
   {
     element: <PublicRoute />,
     children: [
+      { path: "home", element: <Homepage /> },
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
     ],

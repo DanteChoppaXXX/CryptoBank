@@ -13,6 +13,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import BitcoinPrice from "../components/BitcoinPrice"; // ✅ Import BTC rate component
 
 const TransactionContext = createContext();
 
@@ -20,7 +21,18 @@ export const TransactionProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [balanceUSD, setBalanceUSD] = useState(0);
   const [loading, setLoading] = useState(true);
-  const BTC_RATE = 68000;
+  const [btcRate, setBtcRate] = useState(() => {
+    // ✅ Load cached BTC rate on init (fallback 68k)
+    const cached = localStorage.getItem("btcRate");
+    return cached ? parseFloat(cached) : 68000;
+  });
+
+  // ✅ Save BTC rate whenever it updates
+  useEffect(() => {
+    if (btcRate && typeof btcRate === "number") {
+      localStorage.setItem("btcRate", btcRate.toString());
+    }
+  }, [btcRate]);
 
   useEffect(() => {
     let unsubUser = null;
@@ -46,14 +58,14 @@ export const TransactionProvider = ({ children }) => {
           setBalanceUSD(snap.data().balanceUSD || 0);
         }
 
-        // Real-time listener for user balance
+        // Real-time balance listener
         unsubUser = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             setBalanceUSD(docSnap.data().balanceUSD || 0);
           }
         });
 
-        // Real-time listener for transactions
+        // Real-time transaction listener
         const q = query(
           collection(db, "transactions"),
           where("userId", "==", user.uid),
@@ -68,7 +80,7 @@ export const TransactionProvider = ({ children }) => {
               return {
                 id: d.id,
                 ...data,
-                type: data.type?.toLowerCase() || "", // normalize type to lowercase
+                type: data.type?.toLowerCase() || "",
               };
             });
             setTransactions(txs);
@@ -85,7 +97,7 @@ export const TransactionProvider = ({ children }) => {
       }
     });
 
-    // Cleanup listeners on unmount
+    // Cleanup listeners
     return () => {
       unsubscribeAuth();
       if (unsubUser) unsubUser();
@@ -93,7 +105,7 @@ export const TransactionProvider = ({ children }) => {
     };
   }, []);
 
-  // Function to add a transaction
+  // ✅ Add new transaction
   const addTransaction = async (type, amountUSD) => {
     const user = auth.currentUser;
     if (!user) return;
@@ -101,24 +113,26 @@ export const TransactionProvider = ({ children }) => {
     const userRef = doc(db, "users", user.uid);
     const normalizedType = type.toLowerCase();
     const newBalance =
-      normalizedType === "deposit" ? balanceUSD + amountUSD : balanceUSD - amountUSD;
+      normalizedType === "deposit"
+        ? balanceUSD + amountUSD
+        : balanceUSD - amountUSD;
 
-    // Update user balance
+    // Update Firestore user balance
     await updateDoc(userRef, { balanceUSD: newBalance });
     setBalanceUSD(newBalance);
 
-    // Record transaction
+    // Add Firestore transaction record
     await addDoc(collection(db, "transactions"), {
       userId: user.uid,
-      type: normalizedType, // store lowercase for consistency
+      type: normalizedType,
       amountUSD,
-      amountBTC: (amountUSD / BTC_RATE).toFixed(6),
+      amountBTC: (amountUSD / btcRate).toFixed(6), // ✅ uses live or cached BTC rate
       status: "Success",
       createdAt: serverTimestamp(),
     });
   };
 
-  // Reset context data
+  // ✅ Reset context (e.g. on logout)
   const resetData = () => {
     setBalanceUSD(0);
     setTransactions([]);
@@ -133,8 +147,14 @@ export const TransactionProvider = ({ children }) => {
         loading,
         addTransaction,
         resetData,
+        btcRate, // ✅ available globally
       }}
     >
+      {/* ✅ Hidden BTC rate component keeps rate fresh */}
+      <div style={{ display: "none" }}>
+        <BitcoinPrice onRateChange={setBtcRate} />
+      </div>
+
       {children}
     </TransactionContext.Provider>
   );

@@ -17,16 +17,17 @@ import {
   Button,
 } from "@mui/material";
 import { useTransactions } from "../context/TransactionContext";
+import TransactionDetailModal from "../components/TransactionDetailModal";
 
 export default function Transactions() {
-  const { transactions } = useTransactions(); // ✅ Use from context
+  const { transactions } = useTransactions();
   const [filterType, setFilterType] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [search, setSearch] = useState("");
+  const [selectedTx, setSelectedTx] = useState(null);
 
   const loading = transactions === null;
 
-  // --- Derived data ---
   const filteredTransactions = useMemo(() => {
     if (!transactions) return [];
 
@@ -43,15 +44,9 @@ export default function Transactions() {
     }
 
     if (sortBy === "newest") {
-      filtered.sort(
-        (a, b) =>
-          (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
-      );
+      filtered.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     } else if (sortBy === "oldest") {
-      filtered.sort(
-        (a, b) =>
-          (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0)
-      );
+      filtered.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
     } else if (sortBy === "highest") {
       filtered.sort((a, b) => b.amountUSD - a.amountUSD);
     } else if (sortBy === "lowest") {
@@ -63,10 +58,7 @@ export default function Transactions() {
 
   return (
     <Box sx={{ color: "#e6edf3" }}>
-      <Typography
-        variant="h5"
-        sx={{ mb: 3, fontWeight: 700, color: "#00ffcc" }}
-      >
+      <Typography variant="h5" sx={{ mb: 3, fontWeight: 700, color: "#00ffcc" }}>
         Transaction History
       </Typography>
 
@@ -89,9 +81,7 @@ export default function Transactions() {
               color: "#e6edf3",
               borderColor: "#30363d",
               background: "rgba(255,255,255,0.05)",
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#30363d",
-              },
+              "& .MuiOutlinedInput-notchedOutline": { borderColor: "#30363d" },
             }}
           >
             <MenuItem value="all">All</MenuItem>
@@ -109,9 +99,7 @@ export default function Transactions() {
               color: "#e6edf3",
               borderColor: "#30363d",
               background: "rgba(255,255,255,0.05)",
-              "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#30363d",
-              },
+              "& .MuiOutlinedInput-notchedOutline": { borderColor: "#30363d" },
             }}
           >
             <MenuItem value="newest">Newest</MenuItem>
@@ -175,30 +163,33 @@ export default function Transactions() {
         <Table stickyHeader>
           <TableHead sx={{ background: "rgba(255,255,255,0.08)" }}>
             <TableRow>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Type</TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Amount (USD)</TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Amount (BTC)</TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Date</TableCell>
-              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600 }}>Transaction ID</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600, width: "15%" }}>Type</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600, width: "20%" }}>Amount (USD)</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600, width: "20%" }}>Status</TableCell>
+              <TableCell sx={{ color: "#c9d1d9", fontWeight: 600, width: "20%" }}>Date</TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  sx={{ textAlign: "center", color: "#8b949e", py: 3 }}
-                >
+                <TableCell colSpan={4} sx={{ textAlign: "center", color: "#8b949e", py: 3 }}>
                   Loading transactions...
                 </TableCell>
               </TableRow>
             ) : filteredTransactions.length > 0 ? (
               filteredTransactions.map((tx) => (
-                <TableRow key={tx.id}>
-                  <TableCell>{tx.type}</TableCell>
+                <TableRow
+                  key={tx.id}
+                  hover
+                  sx={{
+                    cursor: "pointer",
+                    "&:hover": { background: "rgba(255,255,255,0.08)" },
+                  }}
+                  onClick={() => setSelectedTx(tx)} // ✅ Opens modal with full details
+                >
+                  <TableCell sx={{ textTransform: "capitalize" }}>{tx.type}</TableCell>
                   <TableCell>${tx.amountUSD}</TableCell>
-                  <TableCell>{tx.amountBTC}</TableCell>
                   <TableCell>
                     <Box
                       sx={{
@@ -208,8 +199,7 @@ export default function Transactions() {
                         borderRadius: "6px",
                         fontSize: "0.85rem",
                         fontWeight: 600,
-                        color:
-                          tx.status === "Success" ? "#00ff80" : "#ffee58",
+                        color: tx.status === "Success" ? "#00ff80" : "#ffee58",
                         background:
                           tx.status === "Success"
                             ? "rgba(0,255,128,0.15)"
@@ -221,36 +211,18 @@ export default function Transactions() {
                   </TableCell>
                   <TableCell>
                     {tx.createdAt?.seconds
-                      ? new Date(tx.createdAt.seconds * 1000).toLocaleString(
-                          "en-US",
-                          {
-                            hour12: true,
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )
+                      ? new Date(tx.createdAt.seconds * 1000).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
                       : "—"}
-                  </TableCell>
-                  <TableCell
-                    sx={{ fontFamily: "monospace", color: "#00ffcc" }}
-                  >
-                    {tx.id}
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  sx={{
-                    textAlign: "center",
-                    color: "#8b949e",
-                    py: 3,
-                  }}
-                >
+                <TableCell colSpan={4} sx={{ textAlign: "center", color: "#8b949e", py: 3 }}>
                   No transactions found
                 </TableCell>
               </TableRow>
@@ -258,6 +230,14 @@ export default function Transactions() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Reusable Modal */}
+      <TransactionDetailModal
+        open={!!selectedTx}
+        onClose={() => setSelectedTx(null)}
+        transaction={selectedTx}
+      />
     </Box>
   );
 }
+
