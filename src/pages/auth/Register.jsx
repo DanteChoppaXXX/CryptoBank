@@ -114,12 +114,21 @@ export default function Register() {
         flexDirection: "column",
       }}
     >
-      <Box
-        component="img"
-        src="/logo.png"
-        alt="CryptoBank Logo"
-        sx={{ width: 250, height: 100, mb: 3, opacity: 0.9, p: 1 }}
-      />
+      {/* 🔷 App Logo */}
+      <Link href="/" underline="none">
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="CryptoBank Logo"
+            sx={{
+              width: 250,
+              height: 100,
+              mb: 3,
+              opacity: 0.9,
+              p: 1,
+            }}
+          />
+      </Link>
 
       <Paper
         elevation={3}

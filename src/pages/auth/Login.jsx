@@ -129,18 +129,20 @@ export default function Login() {
       }}
     >
       {/* 🔷 App Logo */}
-      <Box
-        component="img"
-        src="/logo.png"
-        alt="CryptoBank Logo"
-        sx={{
-          width: 250,
-          height: 100,
-          mb: 3,
-          opacity: 0.9,
-          p: 1,
-        }}
-      />
+      <Link href="/" underline="none">
+          <Box
+            component="img"
+            src="/logo.png"
+            alt="CryptoBank Logo"
+            sx={{
+              width: 250,
+              height: 100,
+              mb: 3,
+              opacity: 0.9,
+              p: 1,
+            }}
+          />
+      </Link>
 
       {/* 🔷 Login Card */}
       <Paper
