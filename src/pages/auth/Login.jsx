@@ -80,7 +80,7 @@ export default function Login() {
       });
 
       // ✅ Redirect after success
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       console.error("Login error:", err.code);
       let errorMsg = "Login failed. Please try again.";
@@ -116,7 +116,10 @@ export default function Login() {
     <Box
       sx={{
         minHeight: "100vh",
-        bgcolor: "#0d1117",
+        backgroundImage: "url('/auth.jpg')",
+        backgroundSize: "cover",        // makes the image fill the screen
+        backgroundPosition: "center",    // centers the image
+        backgroundRepeat: "no-repeat",   // prevent tiling
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -146,9 +149,10 @@ export default function Login() {
           p: 4,
           width: "100%",
           maxWidth: 400,
-          bgcolor: "#161b22",
-          border: "1px solid #30363d",
+          bgcolor: "rgba(22, 27, 34, 0.6)",   // 60% opaque (more transparent)
+          border: "1px solid rgba(48, 54, 61, 0.6)",
           borderRadius: "12px",
+          backdropFilter: "blur(10px)",       // frosted glass effect
         }}
       >
         <Typography

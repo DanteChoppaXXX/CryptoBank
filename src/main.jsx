@@ -27,9 +27,10 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
+        path: "/",
         element: <Layout />,
         children: [
-          { index: true, element: <Dashboard /> },
+          { path: "dashboard", element: <Dashboard /> },
           { path: "transactions", element: <Transactions /> },
           { path: "settings", element: <Settings /> },
           { path: "admin", element: <AdminPanel /> },
@@ -42,7 +43,7 @@ const router = createBrowserRouter([
   {
     element: <PublicRoute />,
     children: [
-      { path: "home", element: <Homepage /> },
+      { index: true, element: <Homepage /> },
       { path: "login", element: <Login /> },
       { path: "register", element: <Register /> },
     ],
