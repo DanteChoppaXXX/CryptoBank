@@ -87,7 +87,7 @@ export default function Register() {
         severity: "success",
       });
 
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/dashboard"), 1500);
     } catch (err) {
       let message = err.message;
       if (message.includes("email-already-in-use")) message = "Email already exists.";

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "npm run build && firebase deploy --only hosting",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -18,7 +19,6 @@
     "axios": "^1.13.2",
     "firebase": "^12.5.0",
     "firebase-admin": "^13.5.0",
-    "firebase-functions": "^6.6.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
