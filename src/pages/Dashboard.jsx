@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Box,
   Card,
@@ -10,22 +10,17 @@ import {
   TableCell,
   TableBody,
   Paper,
-  Button,
   CircularProgress,
+  Button,
 } from "@mui/material";
 
-import DepositModal from "../components/DepositModal";
-import WithdrawModal from "../components/WithdrawModal";
 import SlideShow from "../components/SlideShow";
 import TradingViewChartCarousel from "../components/TradingViewChartCarousel";
-
 import { useTransactions } from "../context/TransactionContext";
+import DepositWithdrawController from "../components/DepositWithdrawController";
 
 export default function Dashboard() {
   const { balanceUSD, transactions, loading, btcRate } = useTransactions();
-  const [openDeposit, setOpenDeposit] = useState(false);
-  const [openWithdraw, setOpenWithdraw] = useState(false);
-
   const balanceBTC = btcRate ? (balanceUSD / btcRate).toFixed(6) : "…";
 
   if (loading) {
@@ -59,7 +54,10 @@ export default function Dashboard() {
         }}
       >
         <CardContent>
-          <Typography variant="h6" sx={{ color: "#00ffcc", mb: 1, fontWeight: 600 }}>
+          <Typography
+            variant="h6"
+            sx={{ color: "#00ffcc", mb: 1, fontWeight: 600 }}
+          >
             Total Balance
           </Typography>
           <Typography variant="h4" sx={{ fontWeight: 700 }}>
@@ -69,51 +67,53 @@ export default function Dashboard() {
             ≈ {balanceBTC} BTC
           </Typography>
 
-          {/* ✅ Live BTC Rate Display */}
-      {/*<Typography
-            variant="body2"
-            sx={{ color: "#6ee7b7", mt: 1, fontSize: "0.9rem", fontWeight: 500 }}
-          >
-            1 BTC = ${btcRate ? btcRate.toLocaleString() : "Loading..."} USD
-          </Typography>*/}
+          {/* Buttons */}
+          <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
+            <DepositWithdrawController>
+              {({ openDeposit, openWithdraw }) => (
+                <>
+                  <Button
+                    onClick={openDeposit}
+                    sx={{
+                      background: "#00ffcc",
+                      color: "#000",
+                      borderRadius: "8px",
+                      px: 3,
+                      py: 1,
+                      fontWeight: 600,
+                      "&:hover": { background: "#00d4aa" },
+                    }}
+                  >
+                    Deposit
+                  </Button>
 
-          <Box sx={{ mt: 3 }}>
-            <Button
-              onClick={() => setOpenDeposit(true)}
-              sx={{
-                background: "#00ffcc",
-                color: "#000",
-                borderRadius: "8px",
-                px: 3,
-                py: 1,
-                mr: 2,
-                fontWeight: 600,
-                "&:hover": { background: "#00d4aa" },
-              }}
-            >
-              Deposit
-            </Button>
-            <Button
-              onClick={() => setOpenWithdraw(true)}
-              sx={{
-                background: "rgba(255,255,255,0.1)",
-                color: "#fff",
-                borderRadius: "8px",
-                px: 3,
-                py: 1,
-                fontWeight: 600,
-                "&:hover": { background: "rgba(255,255,255,0.2)" },
-              }}
-            >
-              Withdraw
-            </Button>
+                  <Button
+                    onClick={openWithdraw}
+                    sx={{
+                      background: "rgba(255,255,255,0.1)",
+                      color: "#fff",
+                      borderRadius: "8px",
+                      px: 3,
+                      py: 1,
+                      fontWeight: 600,
+                      "&:hover": { background: "rgba(255,255,255,0.2)" },
+                    }}
+                  >
+                    Withdraw
+                  </Button>
+                </>
+              )}
+            </DepositWithdrawController>
           </Box>
         </CardContent>
-      </Card> 
+      </Card>
+
+      {/* TRADING VIEW CHART CAROUSEL */}
       <TradingViewChartCarousel
-          symbols={["BTCUSD", "ETHUSD", "BNBUSD", "SOLUSD", "XRPUSD"]}
-          intervalMs={6000}
-        />;
+        symbols={["BTCUSD", "ETHUSD", "BNBUSD", "SOLUSD", "XRPUSD"]}
+        intervalMs={60000} // auto-swipe every 1 min
+      />
+
       {/* TRANSACTIONS TABLE */}
       <Box>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
@@ -152,7 +152,8 @@ export default function Dashboard() {
                           borderRadius: "6px",
                           fontSize: "0.85rem",
                           fontWeight: 600,
-                          color: tx.status === "Success" ? "#00ff80" : "#ffee58",
+                          color:
+                            tx.status === "Success" ? "#00ff80" : "#ffee58",
                           background:
                             tx.status === "Success"
                               ? "rgba(0,255,128,0.15)"
@@ -166,7 +167,11 @@ export default function Dashboard() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} align="center" sx={{ color: "#8b949e", py: 3 }}>
+                  <TableCell
+                    colSpan={4}
+                    align="center"
+                    sx={{ color: "#8b949e", py: 3 }}
+                  >
                     No transactions yet.
                   </TableCell>
                 </TableRow>
@@ -178,10 +183,6 @@ export default function Dashboard() {
 
       {/* SLIDESHOW */}
       <SlideShow />
-
-      {/* MODALS */}
-      <DepositModal open={openDeposit} onClose={() => setOpenDeposit(false)} />
-      <WithdrawModal open={openWithdraw} onClose={() => setOpenWithdraw(false)} />
     </Box>
   );
 }

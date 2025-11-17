@@ -4,8 +4,6 @@ import {
   Modal,
   Typography,
   Button,
-  IconButton,
-  Tooltip,
   Snackbar,
   Alert,
   CircularProgress,
@@ -15,73 +13,64 @@ import { QRCodeCanvas } from "qrcode.react";
 import { db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 
-export default function DepositModal({ open, onClose }) {
+export default function DepositModal({ open, onClose, coin }) {
   const [depositAddress, setDepositAddress] = useState("");
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Fetch BTC address from Firestore
   useEffect(() => {
     const fetchWalletAddress = async () => {
+      if (!coin) return;
+
       try {
         setLoading(true);
         setDepositAddress("");
 
         const docRef = doc(db, "appSettings", "globalWallet");
-        const docSnap = await getDoc(docRef);
+        const snap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data?.btcAddress) {
-            setDepositAddress(data.btcAddress);
-          } else {
-            console.warn("No BTC address found in globalWallet document");
-          }
-        } else {
-          console.warn("globalWallet document not found in Firestore");
-        }
-      } catch (error) {
-        console.error("Error fetching BTC address:", error);
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+        const key = `${coin.symbol.toLowerCase()}Address`;
+        if (data[key]) setDepositAddress(data[key]);
+      } catch (err) {
+        console.error("Error fetching wallet address:", err);
       } finally {
         setLoading(false);
       }
     };
 
     if (open) fetchWalletAddress();
-  }, [open]);
+    else setDepositAddress("");
+  }, [open, coin]);
 
-  // Mobile-friendly copy function
   const handleCopy = async () => {
     if (!depositAddress) return;
 
+    // Try modern clipboard API
     if (navigator.clipboard && window.isSecureContext) {
       try {
         await navigator.clipboard.writeText(depositAddress);
-      } catch (err) {
-        fallbackCopyTextToClipboard(depositAddress);
+      } catch {
+        fallbackCopy(depositAddress);
       }
     } else {
-      fallbackCopyTextToClipboard(depositAddress);
+      fallbackCopy(depositAddress);
     }
 
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const fallbackCopyTextToClipboard = (text) => {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-
-    textArea.readOnly = true;
-    textArea.style.position = "absolute";
-    textArea.style.left = "-9999px";
-    document.body.appendChild(textArea);
-
-    const selection = document.getSelection();
-    const selected = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-
-    textArea.select();
-    textArea.setSelectionRange(0, 99999); // Mobile compatibility
+  const fallbackCopy = (text) => {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.left = "-9999px";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
 
     try {
       document.execCommand("copy");
@@ -89,13 +78,7 @@ export default function DepositModal({ open, onClose }) {
       console.error("Fallback copy failed:", err);
     }
 
-    document.body.removeChild(textArea);
-
-    // Restore previous selection
-    if (selected) {
-      selection.removeAllRanges();
-      selection.addRange(selected);
-    }
+    document.body.removeChild(textarea);
   };
 
   return (
@@ -116,7 +99,7 @@ export default function DepositModal({ open, onClose }) {
           }}
         >
           <Typography variant="h6" sx={{ mb: 2, color: "#00ffcc" }}>
-            Deposit Bitcoin
+            Deposit {coin?.symbol || ""}
           </Typography>
 
           {loading ? (
@@ -130,8 +113,15 @@ export default function DepositModal({ open, onClose }) {
                 fgColor="#00ffcc"
               />
 
-              <Typography sx={{ mt: 2, mb: 1, fontSize: "0.9rem", color: "#ff3b3b" }}>
-                Send only Bitcoin to the address below:
+              <Typography
+                sx={{
+                  mt: 2,
+                  mb: 1,
+                  fontSize: "0.9rem",
+                  color: "#ff3b3b",
+                }}
+              >
+                Send only {coin?.symbol} to the address below:
               </Typography>
 
               <Box
@@ -148,12 +138,8 @@ export default function DepositModal({ open, onClose }) {
                 {depositAddress}
               </Box>
 
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                }}
-              >
+              {/* Centered Copy Button */}
+              <Box sx={{ display: "flex", justifyContent: "center" }}>
                 <Button
                   onClick={handleCopy}
                   sx={{
@@ -164,7 +150,7 @@ export default function DepositModal({ open, onClose }) {
                     color: "#00ffcc",
                     fontWeight: 600,
                     borderRadius: "8px",
-                    px: 2,
+                    px: 3,
                     py: 1,
                     "&:hover": { background: "rgba(0,255,204,0.2)" },
                   }}
@@ -176,13 +162,13 @@ export default function DepositModal({ open, onClose }) {
             </>
           ) : (
             <Typography sx={{ color: "#ff6b6b", mt: 2 }}>
-              No deposit address configured.
+              No deposit address configured for {coin?.symbol}.
             </Typography>
           )}
         </Box>
       </Modal>
 
-      {/* Snackbar for copy */}
+      {/* Snackbar */}
       <Snackbar
         open={copied}
         autoHideDuration={1500}

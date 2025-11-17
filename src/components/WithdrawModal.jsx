@@ -19,7 +19,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-export default function WithdrawModal({ open, onClose }) {
+export default function WithdrawModal({ open, onClose, coin }) {
   const [address, setAddress] = useState("");
   const [amountUSD, setAmountUSD] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,12 +32,14 @@ export default function WithdrawModal({ open, onClose }) {
     setLoading(true);
 
     try {
+      if (!coin) throw new Error("No coin selected.");
+
       const user = auth.currentUser;
       if (!user) throw new Error("User not signed in.");
 
       const amount = parseFloat(amountUSD);
       if (!address || isNaN(amount) || amount <= 0) {
-        throw new Error("Enter a valid BTC address and amount.");
+        throw new Error(`Enter a valid ${coin.symbol} address and amount.`);
       }
 
       // Fetch current user balance
@@ -52,27 +54,28 @@ export default function WithdrawModal({ open, onClose }) {
         throw new Error("Insufficient balance for this withdrawal.");
       }
 
-      const BTC_RATE = 68000; // mock conversion rate
-      const amountBTC = (amount / BTC_RATE).toFixed(5);
+      // TEMP conversion until your live rate system is plugged in
+      const USD_RATE = coin.usdRate || 68000; // fallback for BTC
+      const amountCrypto = (amount / USD_RATE).toFixed(6);
 
       // Add transaction record
       await addDoc(collection(db, "transactions"), {
         userId: user.uid,
-        type: "Withdrawal",
+        type: "withdrawal",
+        coin: coin.symbol,
         amountUSD: amount,
-        amountBTC,
+        amountCrypto,
         address,
         status: "Pending",
         createdAt: serverTimestamp(),
       });
 
-      // Deduct from user balance
+      // Deduct USD balance
       await updateDoc(userRef, {
         balanceUSD: currentBalance - amount,
       });
 
-      // Success feedback
-      setMessage(`Withdrawal of $${amount} requested successfully!`);
+      setMessage(`Withdrawal of $${amount} in ${coin.symbol} requested successfully!`);
       setAddress("");
       setAmountUSD("");
     } catch (err) {
@@ -101,12 +104,12 @@ export default function WithdrawModal({ open, onClose }) {
           }}
         >
           <Typography variant="h6" sx={{ mb: 2, color: "#ff3b3b" }}>
-            Withdraw Bitcoin
+            Withdraw {coin?.symbol}
           </Typography>
 
           <TextField
             fullWidth
-            label="BTC Address"
+            label={`${coin?.symbol} Address`}
             variant="outlined"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
