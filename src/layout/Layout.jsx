@@ -219,6 +219,21 @@ export default function Layout() {
             ))}
           </List>
         </Box>
+          <Box
+            component="footer"
+            sx={{
+              bgcolor: "#30363d",
+              textAlign: "center",
+              py: 2,
+              borderTop: "1px solid #30363d",
+              color: "#ffffff",
+              fontSize: "0.9rem",
+              position: "relative",
+            }}
+          >
+            © {new Date().getFullYear()} Version 0.2.1
+          </Box>
+
       </Drawer>
 
       {/* 🧩 Main Page Content */}
@@ -245,7 +260,7 @@ export default function Layout() {
           fontSize: "0.9rem",
         }}
       >
-        © {new Date().getFullYear()} CryptoBank — All rights reserved
+        © {new Date().getFullYear()} Quantum Financial System — All rights reserved
       </Box>
 
       {/* 👤 Profile Drawer */}

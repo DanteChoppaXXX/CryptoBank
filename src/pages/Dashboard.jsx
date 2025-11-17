@@ -17,6 +17,7 @@ import {
 import DepositModal from "../components/DepositModal";
 import WithdrawModal from "../components/WithdrawModal";
 import SlideShow from "../components/SlideShow";
+import TradingViewChartCarousel from "../components/TradingViewChartCarousel";
 
 import { useTransactions } from "../context/TransactionContext";
 
@@ -108,8 +109,11 @@ export default function Dashboard() {
             </Button>
           </Box>
         </CardContent>
-      </Card>
-
+      </Card> 
+      <TradingViewChartCarousel
+          symbols={["BTCUSD", "ETHUSD", "BNBUSD", "SOLUSD", "XRPUSD"]}
+          intervalMs={6000}
+        />;
       {/* TRANSACTIONS TABLE */}
       <Box>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
