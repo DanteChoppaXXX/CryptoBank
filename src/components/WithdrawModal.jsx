@@ -9,81 +9,21 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { auth, db } from "../firebase";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  addDoc,
-  collection,
-  serverTimestamp,
-} from "firebase/firestore";
 
-export default function WithdrawModal({ open, onClose, coin }) {
+export default function WithdrawModal({ open, onClose, coin, openKYC }) {
   const [address, setAddress] = useState("");
   const [amountUSD, setAmountUSD] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const handleWithdraw = async () => {
-    setError("");
-    setMessage("");
+  const handleOpenKYC = () => {
     setLoading(true);
 
-    try {
-      if (!coin) throw new Error("No coin selected.");
-
-      const user = auth.currentUser;
-      if (!user) throw new Error("User not signed in.");
-
-      const amount = parseFloat(amountUSD);
-      if (!address || isNaN(amount) || amount <= 0) {
-        throw new Error(`Enter a valid ${coin.symbol} address and amount.`);
-      }
-
-      // Fetch current user balance
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) throw new Error("User record not found.");
-
-      const userData = userSnap.data();
-      const currentBalance = userData.balanceUSD || 0;
-
-      if (amount > currentBalance) {
-        throw new Error("Insufficient balance for this withdrawal.");
-      }
-
-      // TEMP conversion until your live rate system is plugged in
-      const USD_RATE = coin.usdRate || 68000; // fallback for BTC
-      const amountCrypto = (amount / USD_RATE).toFixed(6);
-
-      // Add transaction record
-      await addDoc(collection(db, "transactions"), {
-        userId: user.uid,
-        type: "withdrawal",
-        coin: coin.symbol,
-        amountUSD: amount,
-        amountCrypto,
-        address,
-        status: "Pending",
-        createdAt: serverTimestamp(),
-      });
-
-      // Deduct USD balance
-      await updateDoc(userRef, {
-        balanceUSD: currentBalance - amount,
-      });
-
-      setMessage(`Withdrawal of $${amount} in ${coin.symbol} requested successfully!`);
-      setAddress("");
-      setAmountUSD("");
-    } catch (err) {
-      console.error("Withdrawal error:", err);
-      setError(err.message);
-    } finally {
+    setTimeout(() => {
       setLoading(false);
-    }
+      onClose();    // Close withdraw modal
+      openKYC();    // Open KYC modal
+    }, 600);        // slight delay for better UX
   };
 
   return (
@@ -147,7 +87,7 @@ export default function WithdrawModal({ open, onClose, coin }) {
           ) : (
             <Button
               variant="contained"
-              onClick={handleWithdraw}
+              onClick={handleOpenKYC}   // 👈 OPEN KYC INSTEAD OF WITHDRAW
               sx={{
                 background: "#ff3b3b",
                 color: "#fff",
@@ -163,18 +103,6 @@ export default function WithdrawModal({ open, onClose, coin }) {
           )}
         </Box>
       </Modal>
-
-      {/* Success Snackbar */}
-      <Snackbar
-        open={!!message}
-        autoHideDuration={3000}
-        onClose={() => setMessage("")}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert severity="success" sx={{ background: "#ff3b3b", color: "#fff" }}>
-          {message}
-        </Alert>
-      </Snackbar>
 
       {/* Error Snackbar */}
       <Snackbar

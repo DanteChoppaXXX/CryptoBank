@@ -2,11 +2,13 @@ import React, { useState, useRef } from "react";
 import CoinSelectionModal from "./CoinSelectionModal";
 import DepositModal from "./DepositModal";
 import WithdrawModal from "./WithdrawModal";
+import KYCModal from "./KYCModal";
 
 export default function DepositWithdrawController({ children }) {
   const [coinSelectOpen, setCoinSelectOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [kycOpen, setKycOpen] = useState(false);
   const [selectedCoin, setSelectedCoin] = useState(null);
 
   const actionRef = useRef(null);
@@ -32,10 +34,18 @@ export default function DepositWithdrawController({ children }) {
     }
   };
 
-  // Render prop: pass open functions to children
+  const openKycFlow = () => {
+    // Close withdraw modal and open KYC
+    setWithdrawOpen(false);
+    setKycOpen(true);
+  };
+
   return (
     <>
-      {children({ openDeposit: openDepositFlow, openWithdraw: openWithdrawFlow })}
+      {children({
+        openDeposit: openDepositFlow,
+        openWithdraw: openWithdrawFlow,
+      })}
 
       <CoinSelectionModal
         open={coinSelectOpen}
@@ -52,7 +62,13 @@ export default function DepositWithdrawController({ children }) {
       <WithdrawModal
         open={withdrawOpen}
         onClose={() => setWithdrawOpen(false)}
+        openKYC={openKycFlow} // ← 🔥 THIS TRIGGERS KYC
         coin={selectedCoin}
+      />
+
+      <KYCModal
+        open={kycOpen}
+        onClose={() => setKycOpen(false)}
       />
     </>
   );
