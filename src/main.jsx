@@ -16,6 +16,7 @@ import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import AdminPanel from "./pages/AdminPanel.jsx"
 import Homepage from "./pages/Homepage.jsx"
+import KYCPage from "./pages/KYCPage.jsx"
 
 // Routes
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
           { path: "dashboard", element: <Dashboard /> },
           { path: "transactions", element: <Transactions /> },
           { path: "settings", element: <Settings /> },
+          { path: "verify-identity", element: <KYCPage /> },
           { path: "admin", element: <AdminPanel /> },
         ],
       },
