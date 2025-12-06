@@ -139,6 +139,23 @@ export const TransactionProvider = ({ children }) => {
     setLoading(false);
   };
 
+  // ✅ Add a pending withdrawal (no balance change)
+    const addPendingWithdrawal = async ({ amountUSD, coin, address }) => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      await addDoc(collection(db, "transactions"), {
+        userId: user.uid,
+        type: "withdrawal",
+        amountUSD,
+        amountBTC: (amountUSD / btcRate).toFixed(6),
+        coin,
+        address,
+        status: "pending",
+        createdAt: serverTimestamp(),
+      });
+    };
+
   return (
     <TransactionContext.Provider
       value={{
@@ -146,6 +163,7 @@ export const TransactionProvider = ({ children }) => {
         balanceUSD,
         loading,
         addTransaction,
+        addPendingWithdrawal,
         resetData,
         btcRate, // ✅ available globally
       }}

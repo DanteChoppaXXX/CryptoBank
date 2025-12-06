@@ -10,20 +10,68 @@ import {
   Alert,
 } from "@mui/material";
 
-export default function WithdrawModal({ open, onClose, coin, openKYC }) {
+import { auth, db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+import { useTransactions } from "../context/TransactionContext";
+
+export default function WithdrawModal({ open, onClose, coin }) {
   const [address, setAddress] = useState("");
   const [amountUSD, setAmountUSD] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleOpenKYC = () => {
+  const navigate = useNavigate();
+  const { addPendingWithdrawal } = useTransactions();
+
+  const handleConfirm = async () => {
+    if (!address || !amountUSD) {
+      setError("Please complete all fields");
+      return;
+    }
+
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        setError("User not found");
+        setLoading(false);
+        return;
+      }
+
+      const userData = userSnap.data();
+
+      // 1️⃣ Write pending transaction using TransactionContext
+      await addPendingWithdrawal({
+        amountUSD: Number(amountUSD),
+        coin: coin?.symbol,
+        address,
+      });
+
+      // 2️⃣ After transaction is created, check KYC
+      if (!userData.kyc || userData.kyc.status !== "submitted") {
+        setLoading(false);
+        onClose();
+        navigate("/verify-identity");
+        return;
+      }
+
+      // 3️⃣ KYC is fine → complete
       setLoading(false);
-      onClose();    // Close withdraw modal
-      openKYC();    // Open KYC modal
-    }, 600);        // slight delay for better UX
+      onClose();
+      navigate("/dashboard");
+
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong");
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,7 +91,7 @@ export default function WithdrawModal({ open, onClose, coin, openKYC }) {
             boxShadow: "0 0 15px rgba(255,0,0,0.2)",
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2, color: "#ff3b3b" }}>
+          <Typography variant="h6" sx={{ mb: 3, color: "#ff3b3b", fontWeight: 600 }}>
             Withdraw {coin?.symbol}
           </Typography>
 
@@ -87,7 +135,7 @@ export default function WithdrawModal({ open, onClose, coin, openKYC }) {
           ) : (
             <Button
               variant="contained"
-              onClick={handleOpenKYC}   // 👈 OPEN KYC INSTEAD OF WITHDRAW
+              onClick={handleConfirm}
               sx={{
                 background: "#ff3b3b",
                 color: "#fff",
@@ -104,7 +152,6 @@ export default function WithdrawModal({ open, onClose, coin, openKYC }) {
         </Box>
       </Modal>
 
-      {/* Error Snackbar */}
       <Snackbar
         open={!!error}
         autoHideDuration={3000}

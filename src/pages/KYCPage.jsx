@@ -195,7 +195,6 @@ export default function KYCWizard() {
           <TextField
             name="fullname"
             label="Full Name"
-            placeholder="Jane Doe"
             value={data.fullname}
             onChange={onChange}
             fullWidth
@@ -223,7 +222,6 @@ export default function KYCWizard() {
           <TextField
             name="address"
             label="Street Address"
-            placeholder="123 Main St"
             value={data.address}
             onChange={onChange}
             fullWidth
@@ -237,7 +235,6 @@ export default function KYCWizard() {
           <TextField
             name="city"
             label="City"
-            placeholder="Lagos"
             value={data.city}
             onChange={onChange}
             fullWidth
@@ -251,7 +248,6 @@ export default function KYCWizard() {
           <TextField
             name="state"
             label="State / Region"
-            placeholder="Lagos State"
             value={data.state}
             onChange={onChange}
             fullWidth
@@ -265,7 +261,6 @@ export default function KYCWizard() {
           <TextField
             name="zip"
             label="Zip / Postal Code"
-            placeholder="100001"
             value={data.zip}
             onChange={onChange}
             fullWidth
@@ -278,8 +273,7 @@ export default function KYCWizard() {
         return (
           <TextField
             name="ssn"
-            label="SSN / National ID"
-            placeholder="123456789"
+            label="SSN"
             value={data.ssn}
             onChange={onChange}
             fullWidth
@@ -397,7 +391,17 @@ export default function KYCWizard() {
         {/* header + progress */}
         <Box sx={{ px: 3, pt: 3, pb: 1 }}>
           <Box sx={{ mb: 2 }}>
-              {/* Back Button Row */}
+             <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 700,
+                textAlign: "center",
+                mb: 3,
+              }}
+            >
+              Identity Verification (KYC)
+            </Typography>
+             {/* Back Button Row */}
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 <IconButton onClick={goBack} sx={{ color: COLORS.text }}>
                   <ArrowBackIosNewIcon fontSize="small" />
@@ -424,8 +428,8 @@ export default function KYCWizard() {
                   color: COLORS.text,
                 }}
               >
-                To keep your account secure, please complete your identity verification.
-                This helps us confirm it's really you and protects your wallet.
+                To secure your account and enable full account access, please complete the 
+  verification steps below. Your information is encrypted and stored safely.
               </Typography>
             </Box>
 
